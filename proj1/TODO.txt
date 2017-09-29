@@ -1,0 +1,17 @@
+Project description: (Group #5) 
+
+k-NN classifiers: investigate the detrimental effect of irrelevant attributes. 
+Method: create some absolutely clean datafile where you know all attributes are relevant;
+then, keep adding groups of randomly generated attributes. 
+--------------------------------------------------------------------------------------------
+
+I created this file for us to use to communicate ideas, updates, and things that need to 
+be accomplished for the project. As of right now:
+
+   * We need to decide on a dataset to use. Numeric? Discrete? Do we make it up?
+   * How will we measure the number of irrelevant attributes? What is the hypothesis?  
+   * The program will be written in Python. With matplotlib, we can easily graph our
+     results live. 
+
+ 
+
