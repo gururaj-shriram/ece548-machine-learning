@@ -9,9 +9,27 @@ I created this file for us to use to communicate ideas, updates, and things that
 be accomplished for the project. As of right now:
 
    * We need to decide on a dataset to use. Numeric? Discrete? Do we make it up?
+	> Jerry: Kubat suggests we use a dataset from the UCI repository and another 
+          one that we artificially design. Right now, I am using iris but I would 
+          appreciate it if one of you creates the other data-set or recommends a better
+          one to use.
+
    * How will we measure the number of irrelevant attributes? What is the hypothesis?  
    * The program will be written in Python. With matplotlib, we can easily graph our
      results live. 
 
- 
+--------------------------------------------------------------------------------------------
+
+This is what Kubat said in class; we have to prove that error rate increases with the number of irrelevant attributes
+
+Error Rate
+^
+|     /
+|    /
+|   /
+|  /
++-----------> # of irrelevant attributes
+
+
+Start out with 2 good attributes and continually add bad ones (with RNG), showing how error rate increases with # of irrelevant attributes 
 
