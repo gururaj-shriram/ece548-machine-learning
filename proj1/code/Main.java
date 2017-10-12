@@ -4,7 +4,7 @@ import java.util.ArrayList;
 public class Main {
 	
 	private static String inputFile = "input.data";
-	private static String outputFile = "ourData.data";
+	private static String outputFile = "animals.data";
 
 	public static void main(String[] args) {
 		
