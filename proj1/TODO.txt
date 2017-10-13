@@ -1,7 +1,8 @@
 Project description: (Group #5) 
 
 k-NN classifiers: investigate the detrimental effect of irrelevant attributes. 
-Method: create some absolutely clean datafile where you know all attributes are relevant; then, keep adding groups of randomly generated attributes. 
+Method: create some absolutely clean datafile where you know all attributes are 
+relevant; then, keep adding groups of randomly generated attributes. 
 --------------------------------------------------------------------------------
 
 This is what Kubat said in class; we have to prove that error rate increases 
@@ -59,7 +60,8 @@ much as possible. Here is what I did:
 - Performance is measured based on error rate. So I get the number of 
   mis-classified examples, and divide by total number in the testing set 
   to get the error rate. Then I do 1 - error_rate to get the accuracy rate.
-  Accuracy rate is used throughout the rest of the program. 
+  Accuracy rate is used throughout the rest of the program and is what gets 
+  written to file for graphing the results. (thoughts?)
 
 - NN is first run using our NN and scikit NN without any irrelevant attributes.
   Usually this gives around ~93% accuracy. Then irrelevant attributes are 
@@ -79,18 +81,39 @@ much as possible. Here is what I did:
   it will influence the data. 
 
   And the point of the normal is to ensure the data falls within some range,
-  versus using a random number generator. 
+  albeit a range whose values have no meaning (think of chef-shoe-size), versus 
+  using a random number generator. Even though the attribute is irrelevant, it 
+  should still "act" like any other attribute.  
 
   See add_a_new_dimension(). 
 
-- Lastly, the above is done for 1-NN, 3-NN, 5-NN, ..., 9-NN. There is a 
-  constant MAX_K that can be changed to adjust this. 
+- The above process is done for 1-NN, 3-NN, 5-NN, ..., 9-NN. There is a 
+  constant MAX_K that can be changed to adjust what NN to go up to. 
 
-  NOTE: Right now there is nothing done to break ties.     
+- This above point needs discussion. Because our datasets have multiple classes,
+  it is possible for voting neighbors to tie. Right now there is nothing being
+  done to break ties because that wasn't the assignment (again, thoughts?). What
+  is done is that I have a list of all distances and then I sort it. So if 
+  there are 2 votes for tiger and 2 votes for bunny, whichever Python decides to
+  place at the front of the list after sorting is what the algorithm takes. So
+  the solution is randomness right now. 
 
-- I ran my script and the output graphs can be found in data.xlsx in 
-  the report folder.  
+- The script outputs two text files: sci_accuracy.txt and our_accuracy.txt. Each 
+  row in the file is the output for a k-NN. So the first row is 1-NN. Each column
+  represents the performance for that round of irrelevant attributes. 
+  
+  These data can then be imported to Excel as csv file. I did that and pushed a 
+  data.xslx file to the report directory. 
 
+These are some questions I have regarding the output...
 
+Questions:
 
+- What to do about contesting neighbors in the case of 3-NN or 5-NN?
+- Why is it that my naive algorithm can do better than Python's k-NN? 
+- Why is there a difference in performance between the iris and animals dataset? 
+- Is there a reason why 7-NN shows the strongest performance out of all the k-NN? Not 
+  only that, it seems to be the best for *both* datasets. Why?
+- Which k-NN's should we put on our graphs? I picked 1-NN and 7-NN. 
 
+That's it for now. 
