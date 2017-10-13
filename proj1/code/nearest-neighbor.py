@@ -12,8 +12,8 @@ from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 
 # change these to determine the dataset to be run 
-FILENAME = "iris-modified.csv"
-#FILENAME = "animals.data" 
+#FILENAME = "iris-modified.csv"
+FILENAME = "animals.data" 
 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.7
@@ -22,9 +22,9 @@ RANDOM_DATA_MEAN = 10
 # normal distribution will center around this STD as a starting value
 RANDOM_DATA_STD = 3
 # maximum number of irrelevant groups to add; 5 groups --> 10 irrelevant attributes
-NUM_GROUPS = 5
+NUM_GROUPS = 10
 # number of times to run the classifier for a given number of groups 
-NUM_RUNS = 50 
+NUM_RUNS = 100 
 # max number of nearest neighbors to test 
 MAX_K = 9
 

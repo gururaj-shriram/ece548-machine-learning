@@ -1,26 +1,11 @@
 Project description: (Group #5) 
 
 k-NN classifiers: investigate the detrimental effect of irrelevant attributes. 
-Method: create some absolutely clean datafile where you know all attributes are relevant;
-then, keep adding groups of randomly generated attributes. 
---------------------------------------------------------------------------------------------
+Method: create some absolutely clean datafile where you know all attributes are relevant; then, keep adding groups of randomly generated attributes. 
+--------------------------------------------------------------------------------
 
-I created this file for us to use to communicate ideas, updates, and things that need to 
-be accomplished for the project. As of right now:
-
-   * We need to decide on a dataset to use. Numeric? Discrete? Do we make it up?
-	> Jerry: Kubat suggests we use a dataset from the UCI repository and another 
-          one that we artificially design. Right now, I am using iris but I would 
-          appreciate it if one of you creates the other data-set or recommends a better
-          one to use.
-
-   * How will we measure the number of irrelevant attributes? What is the hypothesis?  
-   * The program will be written in Python. With matplotlib, we can easily graph our
-     results live. 
-
---------------------------------------------------------------------------------------------
-
-This is what Kubat said in class; we have to prove that error rate increases with the number of irrelevant attributes
+This is what Kubat said in class; we have to prove that error rate increases 
+with the number of irrelevant attributes
 
 Error Rate
 ^
@@ -31,5 +16,81 @@ Error Rate
 +-----------> # of irrelevant attributes
 
 
-Start out with 2 good attributes and continually add bad ones (with RNG), showing how error rate increases with # of irrelevant attributes 
+Start out with 2 good attributes and continually add bad ones (with RNG), 
+showing how error rate increases with # of irrelevant attributes 
+
+--------------------------------------------------------------------------------
+
+Update from Jerry (10/13):
+
+I believe I have finished the program so I would like to discuss the results, 
+data, and what I have done. I have tried to comment the python script as 
+much as possible. Here is what I did:
+
+- There are two nearest neighbor classifiers at play here. The first one I 
+  coded myself using the algorithm from the textbook. In the code, this is 
+  the method nearest_neighbors_implementation(). If you see variables 
+  prefixed with "ours", then this means I am referring to my own NN.   
+
+  The second one comes from Scikit learn, a Python library. I use their 
+  classifier in order to verify the validity of my own algorithm. In the 
+  code, this is the method nearest_neighbors_scikit(). If you see variables
+  prefixed with "scikit", then this means I am referring to Python's NN.  
+
+- Given the dataset, I split it into a training set and testing set using a
+  probability constant called PROBABILITY_TRAINING_SET, which is currently
+  set to 0.7. This means that there is a 70% chance of an available example
+  being placed into the training set. In contrast, there is a 30% chance
+  of an example being placed into the testing set. So the split is 70-30. 
+
+  The training set functions as the examples that are on the scene. An 
+  example from the testing set functions as the test point, akin to
+  what we saw in class, and we would like to see how it gets classified. 
+  What it gets classified as is what I call a ``hypothesis''. 
+
+  Again, visit the nearest_neighbors_implementation() method for my algorithm. 
+
+  Then I employ random subsampling to verify that the accuracy/error rate
+  that we get is reliable. Kubat has a good line in his book that this 
+  can help remedy the problem of non-representative training sets, which
+  can certainly happen given the random division of training and testing set
+  (bottom of p. 11 in 2nd edition). See average_for_runs() method. 
+
+- Performance is measured based on error rate. So I get the number of 
+  mis-classified examples, and divide by total number in the testing set 
+  to get the error rate. Then I do 1 - error_rate to get the accuracy rate.
+  Accuracy rate is used throughout the rest of the program. 
+
+- NN is first run using our NN and scikit NN without any irrelevant attributes.
+  Usually this gives around ~93% accuracy. Then irrelevant attributes are 
+  added to the dataset in groups of two, until the desired number of groups
+  is reached. That number is defined by the constant NUM_GROUPS, which 
+  is set to 10, which means 10 * 2 = 20 irrelevant attributes.    
+
+- Generating irrelevant attributes: To generate irrelevant attribute values,
+  I get a normal distribution based on a constant RANDOM_DATA_MEAN and 
+  a standard deviation RANDOM_DATA_STD. These will initially have small
+  values since the mean is set to 10 and the STD is only 1. But as 
+  groups of irrelevant attributes are added, I multiply the mean by the 
+  current iteration. So for instance, if we want 10 groups and now we are 
+  on 8 groups of irrelevant, then the mean will be centered at 
+  10 * (8 + 1) = 90, because the 1 is added for fun, and the STD will 
+  be 3 + 8 = 11. The point here is to make as much noise as possible such that
+  it will influence the data. 
+
+  And the point of the normal is to ensure the data falls within some range,
+  versus using a random number generator. 
+
+  See add_a_new_dimension(). 
+
+- Lastly, the above is done for 1-NN, 3-NN, 5-NN, ..., 9-NN. There is a 
+  constant MAX_K that can be changed to adjust this. 
+
+  NOTE: Right now there is nothing done to break ties.     
+
+- I ran my script and the output graphs can be found in data.xlsx in 
+  the report folder.  
+
+
+
 
