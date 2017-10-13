@@ -1,7 +1,7 @@
 #
 # nearest-neighbor.py  
 # 
-# date last modified: 8 oct 2017
+# date last modified: 13 oct 2017
 # modified last by: jerry
 #
 
@@ -11,13 +11,22 @@ import operator
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 
-#FILENAME = "iris-modified.csv"
-FILENAME = "animals.data"
+# change these to determine the dataset to be run 
+FILENAME = "iris-modified.csv"
+#FILENAME = "animals.data" 
+
+# probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.7
-K = 7
+# normal distribution will center around this mean as a starting value
 RANDOM_DATA_MEAN = 10
+# normal distribution will center around this STD as a starting value
 RANDOM_DATA_STD = 3
+# maximum number of irrelevant groups to add; 5 groups --> 10 irrelevant attributes
 NUM_GROUPS = 5
+# number of times to run the classifier for a given number of groups 
+NUM_RUNS = 50 
+# max number of nearest neighbors to test 
+MAX_K = 9
 
 
 def split_dataset(examples, prob_training):
@@ -58,11 +67,6 @@ def load_dataset(filename):
 		example = line.strip().split(",") # a row in the data-set 
 		dataset.append(example) # append it to the 2D array
 
-	# need to remove newline character from row 
-	#for x in range(len(dataset)):
-	#	row = dataset[x][-2] 
-	#	dataset[x][-2] = row[0:-1]
-
 	return dataset 
 
 def sort_distances(distances):
@@ -93,7 +97,7 @@ def calculate_distance(training_set, testing_record):
 
 	return distances
 
-def get_nearest_neighbors(training_set, testing_record, k):
+def get_nearest_neighbors(training_set, testing_record, K):
 	"""
 	given a training set and a testing "point" called testing_record,
 	discover the nearest neighbor(s) 
@@ -105,40 +109,42 @@ def get_nearest_neighbors(training_set, testing_record, k):
 	# from Table 3.2 
 	# 1) Among the training examples, identify the k nearest neighbors of x 
 	sorted_distances = sort_distances(distances)
-	#print(sorted_distances)
-	for i in range(k):
+	for i in range(K):
 		nearest_neighbors.append(sorted_distances[i])
 	return nearest_neighbors
 
 
-def get_accuracy(test_set, hypothesis_set):
+def get_accuracy(testing_set, hypothesis_set):
 	"""
-	returns a performance measure for our k-NN 
+	returns a performance measure for our k-NN
 	in particular an error rate and an accuracy rate (1 - error rate)
+
+	@param testing_set: the testing set consisting of an example's correct class label
+	@param hypothesis_set: consists of classifier's hypothesis of the example's class 
 	"""
-	Test_label = [row[-1] for row in test_set]
-	#print(Test_label == hypothesis_list)
-	zipped = list(zip(hypothesis_set, Test_label))
 	total_miss = 0
-	for i in range(len(test_set)):
-		#print(zipped[i])
+
+	# get the correct class labels from the testing set 
+	class_label = [row[-1] for row in testing_set]
+	zipped = list(zip(hypothesis_set, class_label))
+	# directly compare the class label to the hypothesis  
+	for i in range(len(testing_set)):
 		if zipped[i][0] != zipped[i][1]:
 			total_miss += 1
-	error_rate = total_miss * 100.0/len(test_set)
+	error_rate = total_miss * 100.0/len(testing_set)
 	accuracy = 100 - error_rate
 	return (accuracy,error_rate)
 
-def get_accuracy_scikit(Test_label, result_label):
+def get_accuracy_scikit(test_label, result_label):
 	"""
 	returns a performance measure for scikit-learn k-NN 
 	"""
-	zipped = list(zip(result_label, Test_label))
+	zipped = list(zip(result_label, test_label))
 	total_miss = 0
-	for i in range(len(Test_label)):
-		#print(zipped[i])
+	for i in range(len(test_label)):
 		if zipped[i][0] != zipped[i][1]:
 			total_miss += 1
-	error_rate = total_miss * 100.0/len(Test_label)
+	error_rate = total_miss * 100.0/len(test_label)
 	accuracy = 100 - error_rate
 	return (accuracy,error_rate)
 
@@ -154,6 +160,7 @@ def seperate_attribute_and_label(data):
 def classify(nearest_neighbors):
 	"""
 	receives a list of nearest neighbors and performs a majority vote 
+	NOTE: no logic has been defined for splitting ties 
 	"""
 	# frequency map is a dictionary from class label 
 	# to frequency, i.e., number of occurrences 
@@ -170,11 +177,11 @@ def classify(nearest_neighbors):
 	# 3) Label x with ci.
 	# sort in reverse order so that the example with highest vote appears first 
 	frequency_list = sorted(frequency_map.items(), key=operator.itemgetter(1), reverse=True)
-	# this class is appended to the hypothesis list 
+	# returns the first element of the sorted list 
 	return frequency_list[0][0]
 
 
-def nearest_neighbors_implementation(training_set,testing_set,_k):
+def nearest_neighbors_implementation(training_set,testing_set,K):
 	"""
 	our nearest neighbor classifier 
 	"""
@@ -183,24 +190,25 @@ def nearest_neighbors_implementation(training_set,testing_set,_k):
 	# for instance, element 0 stores the majority vote for the first example
 	hypothesis_list = []
 	for i in range(len(testing_set)):
-		nearest_neighbors = get_nearest_neighbors(training_set, testing_set[i], _k)
+		nearest_neighbors = get_nearest_neighbors(training_set, testing_set[i], K)
+		# classifier's hypothesis of the examples 
 		hypothesis_list.append(classify(nearest_neighbors))
 	(accuracy, error) = get_accuracy(testing_set,hypothesis_list)
 	#print("ours-Accuracy: %s%% and error: %s%% " % (accuracy, error))
 	return (accuracy,error)
 
-def nearest_neighbors_scikit(training_set, testing_set,_k):
+def nearest_neighbors_scikit(training_set, testing_set, K):
 	"""
 	scikit-learn's nearest neighbor classifier 
 	we run the classifier using theirs in order to give validity to our results 
 	"""
 	(train_X, train_y) = seperate_attribute_and_label(training_set)
-	neigh = KNeighborsClassifier(n_neighbors=_k)
+	neigh = KNeighborsClassifier(n_neighbors=K)
 	neigh.fit(train_X, train_y)
 	(test_X, test_y) = seperate_attribute_and_label(testing_set)
 	test_result_y = neigh.predict(test_X)
 	(accuracy, error) = get_accuracy_scikit(test_y,test_result_y)
-	#print("scikit-Accuracy: %s%% and error: %s%% " % (accuracy, error))
+
 	return (accuracy,error)
 
 def add_a_new_dimension(dataset, random_itr):
@@ -208,14 +216,21 @@ def add_a_new_dimension(dataset, random_itr):
 	adds a new dimension to the specified dataset 
 	values are added based on the normal distribution 
 	"""
-	random_dim1 = np.absolute(np.random.normal(RANDOM_DATA_MEAN * (random_itr+1), RANDOM_DATA_STD+random_itr, len(dataset)))
+	# generate random values based on the normal distribution, using
+	# a user-defined mean value that is scaled by the number of irrelevant
+	# attribute groups. the scaling is done so that the irr attribute values 
+	# grow as more groups are added
+	random_dimension = np.absolute(np.random.normal(RANDOM_DATA_MEAN 
+		* (random_itr+1), RANDOM_DATA_STD+random_itr, len(dataset)))
 	i = 0
+	# append an element from the distribution to the first element of the example
+	# this is how we add a dimension  
 	for row in dataset:
-		row.insert(0,int((random_dim1[i] * 100) + 0.5) / 100.0)
+		row.insert(0,int((random_dimension[i] * 100) + 0.5) / 100.0)
 		i += 1
 	return dataset
 
-def average_for_runs(dataset, num_runs,_k):
+def average_for_runs(dataset, num_runs, K):
 	"""
 	run our k-NN classifier and scikit learn's k-NN for a specified number 
 	of times. return the average error rate over the total number of runs
@@ -223,20 +238,25 @@ def average_for_runs(dataset, num_runs,_k):
 	our_total_acc = 0
 	scikit_total_acc = 0
 
+	# here we perform random subsampling on the dataset. 
+	# for the user-specified number of runs (say 100), continue the division
+	# of the dataset into a training set and testing set. collect the accuracy
+	# rate and divide by 100 to compute an overall average 
 	for i in range(num_runs):
 		training_set = []
 		testing_set = []
+		# randomly splits the dataset into a training and testing set 
 		(training_set, testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
-		#print("training : " + str(len(training_set)) + " testing : " + str(len(testing_set)))
-		(acc_ours,error_ours) = nearest_neighbors_implementation(training_set,testing_set,_k)
-
-		(acc_scikit, error_scikit) = nearest_neighbors_scikit(training_set,testing_set,_k)
-		#print("\n")
-		#run_list.append([acc_ours,acc_scikit])	
+		# run our nearest-neighbor classifier 
+		(acc_ours, error_ours) = nearest_neighbors_implementation(training_set,testing_set,K)
+		# run scikit learn nearest-neighbor classifier 
+		(acc_scikit, error_scikit) = nearest_neighbors_scikit(training_set,testing_set,K)
+		# total the accuracy rates (note: the error rate is not used) 
 		our_total_acc += acc_ours
 		scikit_total_acc += acc_scikit
 	
-	return(our_total_acc/float(num_runs),scikit_total_acc/float(num_runs))
+	# finally divide by the number of runs to get the overall average 
+	return(our_total_acc/float(num_runs), scikit_total_acc/float(num_runs))
 
 def generate_data_with_irrelevent_attributes(dataset,num_groups = 0):
 	"""
@@ -251,40 +271,57 @@ def generate_data_with_irrelevent_attributes(dataset,num_groups = 0):
 		dataset = add_a_new_dimension(dataset,num_groups)
 	return dataset
 
-def run(filename, groups, k_list):
+def run(filename, groups, max_k, num_runs):
 	"""
-	for k values of 
+	for an input list of K neighbors (e.g: 3, 5, and 7 neighbors), 
+	run the nearest neighbors classifiers over a specified number of runs, 
+	calculate the average accuracy, and append the results to two files:
+	one for our nearest neighbor and another for sci-kit learn nearest neighbor.
+	then repeat the above until the groups irrelevant attributes has been
+	reached. 
+
+	@param filename: points to file containing the dataset  
+	@param groups: number of desired irrelevant attribute groups (added in pairs of 2)
+	@param k_list: list of K nearest neighbors to test algorithm on  
+	@param num_runs: number of times to run the classifier for a given group 
+
 	"""
+	# output files for plotting data; first create the header 
 	f1=open("our_accuracy.txt","w+")
 	for i in range(groups):
 		f1.write(str(i*2)+", ")
 	f1.write("\n")
 	
-	f2=open("sci_accuracy.txt","w+")
+	f2=open("scikit_accuracy.txt","w+")
 	for i in range(groups):
 		f2.write(str(i*2)+",")
 	f2.write("\n")
 	
-	#global K
-	#k_val = [3,5,7]
-	for current_k in k_list:
+	# start at 1-NN 
+	current_k = 1 
+	while current_k <= max_k:
 		print("running k = " + str(current_k))
-		#K = new_k
 		our_accuracy = []
 		scikit_accuracy = []
 		for i in range(groups):
-			print("iteration : " + str(i))
+			#print("iteration : " + str(i))
+			# each time we run a group, need to load a fresh dataset 
 			org_data = load_dataset(filename) 
 			dataset = generate_data_with_irrelevent_attributes(org_data,i)
-			(ours_acc,sci_acc) = average_for_runs(dataset, 50,current_k)
+			(ours_acc,sci_acc) = average_for_runs(dataset, num_runs, current_k)
+			# printing format: 
+			# [current iteration, our accuracy, scikit accuracy, # of attributes]
 			print([i, ours_acc,sci_acc,len(dataset[0])])
 			our_accuracy.append(ours_acc)
 			scikit_accuracy.append(sci_acc)
+		# write the results to file 
 		for i in range(groups):
 			f1.write(str(our_accuracy[i])+",")
 			f2.write(str(scikit_accuracy[i])+",")	
 		f1.write("\n")
 		f2.write("\n")
+		current_k += 2
+
 	f1.close()
 	f2.close()
 
@@ -293,11 +330,11 @@ def run(filename, groups, k_list):
 #	print("iteration : " + str(i))
 #	dataset = generate_data_with_irrelevent_attributes(orginial_dataset,i)
 #	print([i, average_for_runs(dataset, 100,K)])
-# TODO plot a graph using matplotlib 
 
 #(training_set, testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
-#print("training : " + str(len(training_set)) + " testing : " + str(len(testing_set)))
-#knn_scikit_learn(training_set,testing_set)
-run(FILENAME, NUM_GROUPS, [3,5,7])
+
+# run it! 
+#run(FILENAME, NUM_GROUPS, [3,5,7,9], NUM_RUNS)
+run(FILENAME, NUM_GROUPS, MAX_K, NUM_RUNS)
 
 
