@@ -11,9 +11,13 @@ import operator
 from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
 
-FILENAME = "iris-modified.csv"
+#FILENAME = "iris-modified.csv"
+FILENAME = "animals.data"
 PROBABILITY_TRAINING_SET = 0.7
-K = 3
+K = 7
+RANDOM_DATA_MEAN = 10
+RANDOM_DATA_STD = 3
+NUM_GROUPS = 5
 
 
 def split_dataset(examples, prob_training):
@@ -170,7 +174,7 @@ def classify(nearest_neighbors):
 	return frequency_list[0][0]
 
 
-def nearest_neighbors_implementation(training_set,testing_set):
+def nearest_neighbors_implementation(training_set,testing_set,_k):
 	"""
 	our nearest neighbor classifier 
 	"""
@@ -179,19 +183,19 @@ def nearest_neighbors_implementation(training_set,testing_set):
 	# for instance, element 0 stores the majority vote for the first example
 	hypothesis_list = []
 	for i in range(len(testing_set)):
-		nearest_neighbors = get_nearest_neighbors(training_set, testing_set[i], K)
+		nearest_neighbors = get_nearest_neighbors(training_set, testing_set[i], _k)
 		hypothesis_list.append(classify(nearest_neighbors))
 	(accuracy, error) = get_accuracy(testing_set,hypothesis_list)
 	#print("ours-Accuracy: %s%% and error: %s%% " % (accuracy, error))
 	return (accuracy,error)
 
-def nearest_neighbors_scikit(training_set, testing_set):
+def nearest_neighbors_scikit(training_set, testing_set,_k):
 	"""
 	scikit-learn's nearest neighbor classifier 
 	we run the classifier using theirs in order to give validity to our results 
 	"""
 	(train_X, train_y) = seperate_attribute_and_label(training_set)
-	neigh = KNeighborsClassifier(n_neighbors=K)
+	neigh = KNeighborsClassifier(n_neighbors=_k)
 	neigh.fit(train_X, train_y)
 	(test_X, test_y) = seperate_attribute_and_label(testing_set)
 	test_result_y = neigh.predict(test_X)
@@ -199,19 +203,19 @@ def nearest_neighbors_scikit(training_set, testing_set):
 	#print("scikit-Accuracy: %s%% and error: %s%% " % (accuracy, error))
 	return (accuracy,error)
 
-def add_a_new_dimension(dataset):
+def add_a_new_dimension(dataset, random_itr):
 	"""
 	adds a new dimension to the specified dataset 
 	values are added based on the normal distribution 
 	"""
-	random_dim1 = np.absolute(np.random.normal(3.5, 1, len(dataset)))
+	random_dim1 = np.absolute(np.random.normal(RANDOM_DATA_MEAN * (random_itr+1), RANDOM_DATA_STD+random_itr, len(dataset)))
 	i = 0
 	for row in dataset:
 		row.insert(0,int((random_dim1[i] * 100) + 0.5) / 100.0)
 		i += 1
 	return dataset
 
-def average_for_runs(dataset, num_runs):
+def average_for_runs(dataset, num_runs,_k):
 	"""
 	run our k-NN classifier and scikit learn's k-NN for a specified number 
 	of times. return the average error rate over the total number of runs
@@ -224,15 +228,15 @@ def average_for_runs(dataset, num_runs):
 		testing_set = []
 		(training_set, testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 		#print("training : " + str(len(training_set)) + " testing : " + str(len(testing_set)))
-		(acc_ours,error_ours) = nearest_neighbors_implementation(training_set,testing_set)
+		(acc_ours,error_ours) = nearest_neighbors_implementation(training_set,testing_set,_k)
 
-		(acc_scikit, error_scikit) = nearest_neighbors_scikit(training_set,testing_set)
+		(acc_scikit, error_scikit) = nearest_neighbors_scikit(training_set,testing_set,_k)
 		#print("\n")
 		#run_list.append([acc_ours,acc_scikit])	
 		our_total_acc += acc_ours
 		scikit_total_acc += acc_scikit
 	
-	return(our_total_acc/100.0,scikit_total_acc/100.0)
+	return(our_total_acc/float(num_runs),scikit_total_acc/float(num_runs))
 
 def generate_data_with_irrelevent_attributes(dataset,num_groups = 0):
 	"""
@@ -243,18 +247,57 @@ def generate_data_with_irrelevent_attributes(dataset,num_groups = 0):
 	"""
 	#dataset = load_dataset(filename) # "iris-modified.csv"
 	for i in range(num_groups):
-		dataset = add_a_new_dimension(dataset)
-		dataset = add_a_new_dimension(dataset)
+		dataset = add_a_new_dimension(dataset,num_groups)
+		dataset = add_a_new_dimension(dataset,num_groups)
 	return dataset
 
+def run(filename, groups, k_list):
+	"""
+	for k values of 
+	"""
+	f1=open("our_accuracy.txt","w+")
+	for i in range(groups):
+		f1.write(str(i*2)+", ")
+	f1.write("\n")
+	
+	f2=open("sci_accuracy.txt","w+")
+	for i in range(groups):
+		f2.write(str(i*2)+",")
+	f2.write("\n")
+	
+	#global K
+	#k_val = [3,5,7]
+	for current_k in k_list:
+		print("running k = " + str(current_k))
+		#K = new_k
+		our_accuracy = []
+		scikit_accuracy = []
+		for i in range(groups):
+			print("iteration : " + str(i))
+			org_data = load_dataset(filename) 
+			dataset = generate_data_with_irrelevent_attributes(org_data,i)
+			(ours_acc,sci_acc) = average_for_runs(dataset, 50,current_k)
+			print([i, ours_acc,sci_acc,len(dataset[0])])
+			our_accuracy.append(ours_acc)
+			scikit_accuracy.append(sci_acc)
+		for i in range(groups):
+			f1.write(str(our_accuracy[i])+",")
+			f2.write(str(scikit_accuracy[i])+",")	
+		f1.write("\n")
+		f2.write("\n")
+	f1.close()
+	f2.close()
 
-orginial_dataset = load_dataset("iris-modified.csv") # "iris-modified.csv"
-for i in range(40):
-	print("iteration : " + str(i))
-	dataset = generate_data_with_irrelevent_attributes(orginial_dataset,i)
-	print([i, average_for_runs(dataset, 100)])
+#orginial_dataset = load_dataset(FILENAME) # "iris-modified.csv"
+#for i in range(5):
+#	print("iteration : " + str(i))
+#	dataset = generate_data_with_irrelevent_attributes(orginial_dataset,i)
+#	print([i, average_for_runs(dataset, 100,K)])
 # TODO plot a graph using matplotlib 
 
 #(training_set, testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 #print("training : " + str(len(training_set)) + " testing : " + str(len(testing_set)))
 #knn_scikit_learn(training_set,testing_set)
+run(FILENAME, NUM_GROUPS, [3,5,7])
+
+

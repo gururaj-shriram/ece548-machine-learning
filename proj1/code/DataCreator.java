@@ -3,7 +3,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class DataCreator {
 	
-	private static final int NUM_DATA_ELEMENTS = 100;
+	private static final int NUM_DATA_ELEMENTS = 200;
 	
 	/**
 	 * @param classificationList
