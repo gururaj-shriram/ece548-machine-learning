@@ -117,3 +117,20 @@ Questions:
 - Which k-NN's should we put on our graphs? I picked 1-NN and 7-NN. 
 
 That's it for now. 
+
+--------------------------------------------------------------------------------
+
+Update from Guru (10/14):
+
+- Modified the logic for choosing which K-NN to train on to prevent having 
+  "ties" (where one class may have the same number of "votes" as another class)
+- Added new data to reflect the above point
+- Added functionality to create a color map which plots decision bound areas
+  for each class. The map plots the training data along with colors of each 
+  class "area" with a given K-NN. Currently, the script outputs a png file for 
+  each K-NN and for 0, NUM_GROUPS / 2, and NUM_GROUPS irrelevant attributes 
+  (since a plot for each iteration was too computationally intensive).
+
+  Outputs are in the form DATASET-K-NN-M-irrelevant.png
+
+  See examples at reports/classifier\ color\ maps

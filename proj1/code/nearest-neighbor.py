@@ -1,19 +1,22 @@
 #
 # nearest-neighbor.py  
 # 
-# date last modified: 13 oct 2017
-# modified last by: jerry
+# date last modified: 14 oct 2017
+# modified last by: guru
 #
 
-from random import randint
 import math
 import operator
-from sklearn.neighbors import KNeighborsClassifier
 import numpy as np
+import matplotlib.pyplot as plt
+import re
+from random import randint
+from sklearn.neighbors import KNeighborsClassifier
+from matplotlib.colors import ListedColormap
 
 # change these to determine the dataset to be run 
-#FILENAME = "iris-modified.csv"
-FILENAME = "animals.data" 
+FILENAME = "iris-modified.csv"
+# FILENAME = "animals.data" 
 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.7
@@ -26,8 +29,11 @@ NUM_GROUPS = 10
 # number of times to run the classifier for a given number of groups 
 NUM_RUNS = 100 
 # max number of nearest neighbors to test 
-MAX_K = 9
-
+MAX_K = 10
+# global boolean value whether or not to plot the color map of data points
+plot_data = True
+# number of current irrelevant attributes in the dataset
+num_irrelevant = 0
 
 def split_dataset(examples, prob_training):
 	"""
@@ -37,14 +43,14 @@ def split_dataset(examples, prob_training):
 	training_set = []
 	testing_set = []
 
-	# generate a random number [1,100]. if it is greater than 0.7 
-	# then add the example to the testing set; otherwise add 
-	# it to the training set 
+	# generate a random number [1,100]. if it is greater than 
+	# prob_training then add the example to the 
+	# testing set; otherwise add it to the training set 
 	percent_training = prob_training * 100; 
 	for example in examples:
 		result = randint(1, 100) 
-		# if the result is a number less than 70, add to training set
-		# else add it to the testing set 
+		# if the result is a number less than percent_training, 
+		# add to training set; else add it to the testing set 
 		if (result < percent_training):
 			training_set.append(example)
 		else:
@@ -148,7 +154,7 @@ def get_accuracy_scikit(test_label, result_label):
 	accuracy = 100 - error_rate
 	return (accuracy,error_rate)
 
-def seperate_attribute_and_label(data):
+def separate_attribute_and_label(data):
 	"""
 	helper function to pre-process row-data for scikit-learn 
 	attribute vectors and class-label must be separated 
@@ -160,7 +166,7 @@ def seperate_attribute_and_label(data):
 def classify(nearest_neighbors):
 	"""
 	receives a list of nearest neighbors and performs a majority vote 
-	NOTE: no logic has been defined for splitting ties 
+	K's are chosen so as to never have ties 
 	"""
 	# frequency map is a dictionary from class label 
 	# to frequency, i.e., number of occurrences 
@@ -202,14 +208,73 @@ def nearest_neighbors_scikit(training_set, testing_set, K):
 	scikit-learn's nearest neighbor classifier 
 	we run the classifier using theirs in order to give validity to our results 
 	"""
-	(train_X, train_y) = seperate_attribute_and_label(training_set)
+	(train_X, train_y) = separate_attribute_and_label(training_set)
 	neigh = KNeighborsClassifier(n_neighbors=K)
 	neigh.fit(train_X, train_y)
-	(test_X, test_y) = seperate_attribute_and_label(testing_set)
+	(test_X, test_y) = separate_attribute_and_label(testing_set)
 	test_result_y = neigh.predict(test_X)
-	(accuracy, error) = get_accuracy_scikit(test_y,test_result_y)
+	(accuracy, error) = get_accuracy_scikit(test_y, test_result_y)
+
+	# Makes a color map of the K-NN dividing the training examples
+	global plot_data
+
+	if plot_data:
+		plot_color_map(training_set, train_X, train_y, K)
+		plot_data = False
 
 	return (accuracy,error)
+
+def plot_color_map(training_set, train_X, train_y, K):
+	"""
+	Most of the code used to plot is from an example from scikit
+	http://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html
+	"""
+
+	# Convert our training tuples into np arrays to use for plotting
+	class_labels = get_class_labels(training_set)
+	temp_X = np.array(train_X).astype(np.float)
+	temp_y = []
+
+	# Convert string class labels into a number to be used by SciKit's K-NN
+	for data in train_y:
+		temp_y.append(class_labels.get(data))
+
+	X = np.array(temp_X[:,:2])
+	y = np.array(temp_y)
+
+	num_classes = len(class_labels)
+	h = 0.02 # step size
+	for weights in ['distance']:
+	    # we create an instance of Neighbours Classifier and fit the data.
+	    clf = KNeighborsClassifier(n_neighbors=K, weights=weights)
+	    clf.fit(X, y)
+	    # create a random color map for data points and classes
+	    c_map_1 = plt.get_cmap("magma_r")
+	    c_map_2 = ListedColormap(['#FFFFFF'])
+	    # Plot the decision boundary. For that, we will assign a color to each
+	    # point in the mesh [x_min, x_max]x[y_min, y_max].
+	    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+	    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+	    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+	                         np.arange(y_min, y_max, h))
+	    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+
+	    # Put the result into a color plot
+	    Z = Z.reshape(xx.shape)
+	    plt.figure()
+	    plt.pcolormesh(xx, yy, Z, cmap=c_map_1)
+
+	    # Plot also the training points
+	    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=c_map_2,
+	                edgecolor='k', s=20)
+	    plt.xlim(xx.min(), xx.max())
+	    plt.ylim(yy.min(), yy.max())
+	    plt.title("%i-Class classification with the %i-NN Classifier and %i Irrelevant Attributes"
+	              % (num_classes, K, num_irrelevant))
+
+	stripped_filename = re.split('[^a-zA-Z]', FILENAME)[0]
+	plot_filename = stripped_filename + "-" + str(K) + "-NN-" + str(num_irrelevant) + "-irrelevant.png"
+	plt.savefig(plot_filename)
 
 def add_a_new_dimension(dataset, random_itr):
 	"""
@@ -266,10 +331,28 @@ def generate_data_with_irrelevent_attributes(dataset,num_groups = 0):
 	if no value is passed in, then no irrelevant attributes are added 
 	"""
 	#dataset = load_dataset(filename) # "iris-modified.csv"
+
+	global num_irrelevant
+	num_irrelevant = num_groups * 2
+
 	for i in range(num_groups):
 		dataset = add_a_new_dimension(dataset,num_groups)
 		dataset = add_a_new_dimension(dataset,num_groups)
 	return dataset
+
+def get_class_labels(dataset):
+	"""
+	calculates the number of class labels in the dataset
+	returns a dictionary from class label to a random index used for plotting
+	"""
+	class_labels = {}
+	i = 0
+	for row in dataset:
+		if row[-1] not in class_labels:
+			class_labels[row[-1]] = i
+			i += 1
+
+	return class_labels
 
 def run(filename, groups, max_k, num_runs):
 	"""
@@ -282,7 +365,7 @@ def run(filename, groups, max_k, num_runs):
 
 	@param filename: points to file containing the dataset  
 	@param groups: number of desired irrelevant attribute groups (added in pairs of 2)
-	@param k_list: list of K nearest neighbors to test algorithm on  
+	@param max_k: max number of the K nearest neighbors to test algorithm on  
 	@param num_runs: number of times to run the classifier for a given group 
 
 	"""
@@ -290,21 +373,39 @@ def run(filename, groups, max_k, num_runs):
 	f1=open("our_accuracy.txt","w+")
 	for i in range(groups):
 		f1.write(str(i*2)+", ")
+	f1.write("K-NN")
 	f1.write("\n")
 	
 	f2=open("scikit_accuracy.txt","w+")
 	for i in range(groups):
 		f2.write(str(i*2)+",")
+	f2.write("K-NN")
 	f2.write("\n")
 	
+	# pre-processing to get number of classes
+	num_classes = len(get_class_labels(load_dataset(filename)))
+	# predefined list of irrelevant group numbers to plot
+	num_groups_to_plot = [0, NUM_GROUPS / 2, NUM_GROUPS - 1]
+
+	global plot_data
+
 	# start at 1-NN 
 	current_k = 1 
 	while current_k <= max_k:
+		# skip values of k which may end up in a tie during classification
+		if current_k % num_classes % 2 != 1:
+			current_k += 1
+			continue
+
 		print("running k = " + str(current_k))
 		our_accuracy = []
 		scikit_accuracy = []
 		for i in range(groups):
-			#print("iteration : " + str(i))
+			# plot color map if the number of irrelevant attributes is in a 
+			# predefined list
+			if i in num_groups_to_plot:
+				plot_data = True
+			# print("iteration : " + str(i))
 			# each time we run a group, need to load a fresh dataset 
 			org_data = load_dataset(filename) 
 			dataset = generate_data_with_irrelevent_attributes(org_data,i)
@@ -318,9 +419,10 @@ def run(filename, groups, max_k, num_runs):
 		for i in range(groups):
 			f1.write(str(our_accuracy[i])+",")
 			f2.write(str(scikit_accuracy[i])+",")	
-		f1.write("\n")
-		f2.write("\n")
-		current_k += 2
+
+		f1.write(str(current_k) + "\n")
+		f2.write(str(current_k) + "\n")
+		current_k += 1
 
 	f1.close()
 	f2.close()
@@ -336,5 +438,3 @@ def run(filename, groups, max_k, num_runs):
 # run it! 
 #run(FILENAME, NUM_GROUPS, [3,5,7,9], NUM_RUNS)
 run(FILENAME, NUM_GROUPS, MAX_K, NUM_RUNS)
-
-

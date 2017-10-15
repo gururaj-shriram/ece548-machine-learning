@@ -16,3 +16,4 @@ dataset: Main.java
 clean: 
 	-rm *.class 
 	-rm *.txt
+	-rm *.png
