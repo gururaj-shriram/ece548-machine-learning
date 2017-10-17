@@ -1,7 +1,7 @@
 #
 # nearest-neighbor.py  
 # 
-# date last modified: 14 oct 2017
+# date last modified: 15 oct 2017
 # modified last by: guru
 #
 
@@ -17,6 +17,7 @@ from matplotlib.colors import ListedColormap
 # change these to determine the dataset to be run 
 FILENAME = "iris-modified.csv"
 # FILENAME = "animals.data" 
+# FILENAME = "wine-12-attributes.data"
 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.7
@@ -30,7 +31,9 @@ NUM_GROUPS = 10
 NUM_RUNS = 100 
 # max number of nearest neighbors to test 
 MAX_K = 10
-# global boolean value whether or not to plot the color map of data points
+# flag whether or not to generate irrelevant attributes
+DATA_NEEDS_IRRELEVANT_ATTRIBUTES = True
+# global flag whether or not to plot the color map of data points
 plot_data = True
 # number of current irrelevant attributes in the dataset
 num_irrelevant = 0
@@ -165,8 +168,7 @@ def separate_attribute_and_label(data):
 
 def classify(nearest_neighbors):
 	"""
-	receives a list of nearest neighbors and performs a majority vote 
-	K's are chosen so as to never have ties 
+	receives a list of nearest neighbors and performs a majority vote  
 	"""
 	# frequency map is a dictionary from class label 
 	# to frequency, i.e., number of occurrences 
@@ -230,7 +232,7 @@ def plot_color_map(training_set, train_X, train_y, K):
 	http://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html
 	"""
 
-	# Convert our training tuples into np arrays to use for plotting
+	# Convert the training tuples into np arrays to use for plotting
 	class_labels = get_class_labels(training_set)
 	temp_X = np.array(train_X).astype(np.float)
 	temp_y = []
@@ -392,11 +394,6 @@ def run(filename, groups, max_k, num_runs):
 	# start at 1-NN 
 	current_k = 1 
 	while current_k <= max_k:
-		# skip values of k which may end up in a tie during classification
-		if current_k % num_classes % 2 != 1:
-			current_k += 1
-			continue
-
 		print("running k = " + str(current_k))
 		our_accuracy = []
 		scikit_accuracy = []
@@ -408,7 +405,12 @@ def run(filename, groups, max_k, num_runs):
 			# print("iteration : " + str(i))
 			# each time we run a group, need to load a fresh dataset 
 			org_data = load_dataset(filename) 
-			dataset = generate_data_with_irrelevent_attributes(org_data,i)
+
+			if DATA_NEEDS_IRRELEVANT_ATTRIBUTES:
+				dataset = generate_data_with_irrelevent_attributes(org_data,i)
+			else:
+				dataset = org_data
+
 			(ours_acc,sci_acc) = average_for_runs(dataset, num_runs, current_k)
 			# printing format: 
 			# [current iteration, our accuracy, scikit accuracy, # of attributes]
@@ -422,7 +424,7 @@ def run(filename, groups, max_k, num_runs):
 
 		f1.write(str(current_k) + "\n")
 		f2.write(str(current_k) + "\n")
-		current_k += 1
+		current_k += 2
 
 	f1.close()
 	f2.close()
