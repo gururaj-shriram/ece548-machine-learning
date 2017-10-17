@@ -1,0 +1,13 @@
+\begin{thebibliography}{1}
+
+\bibitem{kubat}
+M.~Kubat.
+\newblock {\em An Introduction to Machine Learning}, chapter Inter-Class
+  Boundaries: Linear and Polynomial Classifiers.
+\newblock Springer International, second edition, 2017.
+
+\bibitem{scikit}
+Scikit-learn.
+\newblock Nearest neighbors classification.
+
+\end{thebibliography}
