@@ -61,6 +61,16 @@ The \textit{\textit{k}}-NN classifier is a version of the Nearest Neighbor class
 
 For this project, we used two \textit{k}-NN classifiers written in Python to examine our datasets. The first is our own algorithm which was implemented using Table 3.2 in \cite{kubat}. The second is imported from the SciKit-learn, a popular machine learning library that has implemented many of the classifiers present in the textbook \cite{scikit}. This additional check is a cross-check between our "simple" classifier and one implemented by experts, i.e. Scikit-learn. If the classifiers perform similarly, then we expect that our findings are reliable.  \\  
 
+\begin{center}
+\includegraphics[scale=0.7]{ours-vs-scikit} \\
+\end{center}
+
+\begin{center}
+\includegraphics[scale=0.7]{ours-vs-scikit2} \\
+\end{center}
+
+The two algorithms have mostly the same output, but there are slight differences. For the \textit{k}=1 case, the two algorithms are actually identical -- they behave exactly the same way in classifying the data. The differences arise when \textit{k} is greater than one. We determine this difference to be in how we break ties that arise from having more than two possible classes. In our implementation, ties are essentially broken by the Python sort method. When determining classes, we sort classes based by number of neighbors indicating that class. If two happen to tie, then Python sorts alphanumerically by the name of the class. This was a bit of an oversight on our part, but since these domains are both so simple and ties are infrequent, it didn’t end up affecting the data in any real sense. \\
+
 Irrelevant attributes are added in groups of two, with an initial control group of zero irrelevant attributes. To add irrelevant attributes, we used a normal distribution where $\mu$ = 10 and $\sigma$ = 1. The purpose of using this distribution, rather than employing a random number generator, is to create values that mimic irrelevant attributes in realistic domains. Akin to circumstances where engineers do not know which attributes are relevant and which are not, we strive to simulate similar conditions by adding irrelevant attribute values that "act" like any other attribute. The value of $\mu$ and $\sigma$ are gradually increased as groups of irrelevant attributes are added. This resulted in giving the irrelevant attribute values spread without dominating the data due to scaling. Additional research could compare the impact of irrelevant attribute values created by a random number generator and that of the normal distribution that we used.  \\
 
 Finally, we randomly partitioned the datasets into testing and training sets with a ratio of 3:7, respectively. We employed random subsampling to make certain that our training set was representative of the data, and reported the average of all the testing sets. This will ensure that the results are reliable. The division of training and testing set was done 100 times, yielding 100 testing sets. \\   
@@ -74,16 +84,17 @@ We obtained the Iris dataset from the UCI machine learning repository. The attri
 With no irrelevant attributes, the k-NN classifiers (with k ranging from 1 to 9) all classify randomly-partitioned testing sets with at least 95\% accuracy. Our data clearly show that adding irrelevant attributes immediately worsens our accuracy rate, plummeting about twenty points when two irrelevant attributes are added to the dataset. This downward trend continues all the way until the accuracy rate is around an abysmal 30\% with 18 irrelevant attributes. This is the case for both\textit{ k}-NN classifiers, with varied values for \textit{k}. The error rate is over 66\%, indicating that having irrelevant attributes makes the classifier do worse than random. The irrelevant attributes actively misleads the learner's decision-making, thus yielding a classifier that does worse than a class determined by a fair coin flip. The sharpest drop in accuracy occurs with the addition of the first 6 irrelevant attributes. This makes sense because the amount of bad values eclipse and overcome the amount of good values in the distance formula (3 relevant attributes), so at that point it reaches and dips slightly below 40\%, which is slightly better than pure randomness because the relevant attributes contribute slightly to picking the correct class.
 
 \begin{center}
-\includegraphics[scale=0.7]{image2} \\
+\includegraphics[scale=0.7]{our-knn-iris} \\
 \end{center}
 
-This graph shows our 1-NN and 7-NN classifiers on the Iris dataset. Except for the bump at 12 irrelevant attributes, the irrelevant attributes have more of a negative effect when k has a higher value.
+This graph shows our 1-NN and 7-NN classifiers on the Iris dataset. Except for the bump at 12 irrelevant attributes, the irrelevant attributes have more of a negative effect when k has a higher value. \\
 
 \begin{center}
-\includegraphics[scale=0.7]{image1} \\
+\includegraphics[scale=0.7]{our-knn-iris-full} \\
 \end{center}
 
-The two algorithms have mostly the same output, but there are slight differences. For the \textit{k}=1 case, the two algorithms are actually identical -- they behave exactly the same way in classifying the data. The differences arise when \textit{k} is greater than one. We determine this difference to be in how we break ties that arise from having more than two possible classes. In our implementation, ties are essentially broken by the Python sort method. When determining classes, we sort classes based by number of neighbors indicating that class. If two happen to tie, then Python sorts alphanumerically by the name of the class. This was a bit of an oversight on our part, but since these domains are both so simple and ties are infrequent, it didn’t end up affecting the data in any real sense.
+This shows our classifier with all values of k we tested on the Iris dataset. For all classifiers, the steepest drop in accuracy is with the introduction of the first 6 irrelevant attributes, after which our classifier converges at around 30\% accuracy. \\
+
 
 \section{Animal Dataset}
 
