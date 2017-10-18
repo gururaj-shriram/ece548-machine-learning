@@ -15,8 +15,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from matplotlib.colors import ListedColormap
 
 # change these to determine the dataset to be run 
-FILENAME = "iris-modified.csv"
-# FILENAME = "animals.data" 
+# FILENAME = "iris-modified.csv"
+FILENAME = "animals.data" 
 # FILENAME = "wine-12-attributes.data"
 
 # probability of an example being in the training set 
@@ -185,8 +185,12 @@ def classify(nearest_neighbors):
 	# 3) Label x with ci.
 	# sort in reverse order so that the example with highest vote appears first 
 	frequency_list = sorted(frequency_map.items(), key=operator.itemgetter(1), reverse=True)
-	# returns the first element of the sorted list 
-	return frequency_list[0][0]
+
+	# compute all class labels with ties (same highest frequency)
+	winners = [item[0] for item in frequency_list if item[1] == frequency_list[0][1]]
+
+	# returns a random element from the list of winners
+	return winners[randint(0, len(winners) - 1)]
 
 
 def nearest_neighbors_implementation(training_set,testing_set,K):
