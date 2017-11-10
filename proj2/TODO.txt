@@ -1,0 +1,22 @@
+Project description (Group #7): 
+
+Implement the basic version of Adaboost. The number of voting classifiers is 
+determined by a user-set constant. Another user-set constant specifies the number 
+of examples in each training set, Ti. The weights of the individual classifiers are 
+obtained with the help of perceptron learning. Apply the program task to some of
+the benchmark domains from the UCI repository. Make observations about this
+program's performance on different data. For each domain, plot a graph showing
+how the overall accuracy of the resulting classifier depends on the number of
+subclassifiers. Also, observe how the error rate on the training set and the error
+rate on the testing set tend to converge with the growing number of classifiers.
+------------------------------------------------------------------------------------
+11/10 - update [by: jerry]
+
+Some things Kubat has mentioned to me: 
+   * datasets should have only two classes: "pos" versus "neg"
+   * base-line learners should be linear classifiers 
+   * everything to be implemented ourselves  
+
+Presentations begin first day after thanksgiving break, 11/27. So probably we will 
+present that friday, 12/1.
+-----------------------------------------------------------------------------------  
