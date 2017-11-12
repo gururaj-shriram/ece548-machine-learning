@@ -20,3 +20,16 @@ Some things Kubat has mentioned to me:
 Presentations begin first day after thanksgiving break, 11/27. So probably we will 
 present that friday, 12/1.
 -----------------------------------------------------------------------------------  
+11/12 - info on datasets [by: jerry]
+
+1) default of credit card clients -- seems like a difficult dataset. on perceptron,
+  error rate does not seem to go below 20%. will be interesting to see what happens
+  after boosting. 
+  --> see default.csv and default.names for info 
+
+2) modified wine (for only 2 classes) -- this is only for testing purposes. I 
+   modified the wine dataset to have only two classes to verify that perceptron
+   is working. do not use this for graphs and the report, way too easy.  
+
+need more datasets! 
+
