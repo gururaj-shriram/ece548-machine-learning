@@ -21,16 +21,18 @@ from adaboost import AdaBoost
 # once again, change this to switch datasets 
 FILENAME = "dataset/default.csv" 
 # probability of an example being in the training set 
-PROBABILITY_TRAINING_SET = 0.6
+PROBABILITY_TRAINING_SET = 0.7
 
 # learning rate for perceptron 
-ETA = 0.05 
+ETA = 0.1
 # desired threshold for error rate; 0.2 --> 20% 
 THRESHOLD = 0.2
 # maximum number of epochs for training
 UPPER_BOUND = 100 
 # verbose flag 
-IS_VERBOSE = False 
+IS_VERBOSE = True 
+# number of classifiers to induce in Adaboost
+NUM_OF_CLASSIFIERS = 10
 
 def split_dataset(examples, prob_training):
 	"""
@@ -99,8 +101,10 @@ def calculate_error(class_labels, hypothesis_list):
 # preprocessing: load in the dataset and split into a training and testing set 
 dataset = load_dataset(FILENAME) 
 (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
-print("training set size: %s testing set size: %s num instances: %s" % 
-	(len(training_set), len(testing_set), len(dataset)))
+
+if IS_VERBOSE:
+	print("training set size: %s testing set size: %s num instances: %s" % 
+		(len(training_set), len(testing_set), len(dataset)))
 
 # because datasets sometimes place the class attribute at the end or even 
 # at the beginning or the middle, we'll separate the attribute vector from
@@ -132,5 +136,12 @@ print("training set size: %s testing set size: %s num instances: %s" %
 #pred_t = net.predict(test_x)
 #print("scikit-learn perceptron testing error rate %s" % calculate_error(test_y, pred_t))
 
-ada_obj = AdaBoost(10, ETA, UPPER_BOUND, IS_VERBOSE)
+ada_obj = AdaBoost(NUM_OF_CLASSIFIERS, ETA, UPPER_BOUND, IS_VERBOSE)
 ada_obj.fit(train_x, train_y)
+
+hypothesis_list = ada_obj.predict(test_x)
+mistakes = ada_obj.xor_tuples(test_y, hypothesis_list)
+error_rate = ada_obj.classifier_error_rate(mistakes)
+
+if IS_VERBOSE:
+	print("Testing set error rate after training %f" % (error_rate))
