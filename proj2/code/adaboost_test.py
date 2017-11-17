@@ -21,7 +21,7 @@ from adaboost import AdaBoost
 # once again, change this to switch datasets 
 FILENAME = "dataset/default.csv" 
 # probability of an example being in the training set 
-PROBABILITY_TRAINING_SET = 0.5
+PROBABILITY_TRAINING_SET = 0.6
 
 # learning rate for perceptron 
 ETA = 0.05 
