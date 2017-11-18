@@ -70,7 +70,7 @@ def load_dataset(filename):
 	# an attribute. 
 	for line in file: 
 		example = line.strip().split(",") # a row in the data-set 
-		dataset.append(list(map(float, example[1:]))) # append it to the 2D array
+		dataset.append(list(map(float, example[:]))) # append it to the 2D array
 
 	return dataset 
 
