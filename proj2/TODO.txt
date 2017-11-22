@@ -31,5 +31,77 @@ present that friday, 12/1.
    modified the wine dataset to have only two classes to verify that perceptron
    is working. do not use this for graphs and the report, way too easy.  
 
+3) ionosphere 
+
 need more datasets! 
+-----------------------------------------------------------------------------------  
+11/22 - update [by: jerry]
+
+I received this e-mail from the professor: 
+
+"By the way. When generating the random subsets, you guys can perhaps benefit from 
+a little programming trick explained in my book, Chapter 13, section 2, 
+(pp.258-9in the first edition)."
+
+This is in reference to the genetic algorithm chapter. In particular, he is talking
+about the wheel of fortune in which individuals are chosen. It took awhile to figure
+out what this had to do with Adaboost, but the idea is this: 
+
+Recall that we were having trouble with getting the required number of examples
+for each training subset. The wheel of fortune is an approach to solving this. 
+
+Suppose we have 5 examples. The initial probabilities will then be 1 / 5 = 0.2 
+Now imagine the wheel of fortune (pg. 310 in book), which is really a dart-board. 
+Each of these 5 examples comprises a portion of this dart-board, in specific, 20%
+of it. So ex1 will range from [0, 0.2), ex2 [0.2, 0.4), ex3 [0.4, 0.6), ..., 
+ex5 [0.8, 1). 
+
+Now we throw darts at this board and see where the dart lands. Say that it falls 
+on 0.3. That means we select ex2 to add into the subset. We keep throwing darts 
+until we've reached the desired number of examples for the training subset.    
+
+The book mentions that F = SUM(Fi) where Fi is each individual's "fitness". 
+In our case, Fi is each of the individual probabilities for the examples. And
+this makes sense because 0.2 + 0.2 + 0.2 + 0.2 + 0.2 = 1, because all probabilities
+must add up to 1. So the entire dartboard has probability of 1. 
+
+I thought this was clever but it turns out that Guru had discovered numpy and numpy
+takes care of all of the above with one line: 
+
+np.random.choice(n_training, self.train_num, replace=False, p=prob_list) 
+
+[https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.random.choice.html]
+
+They may not implement their sampling the same way, but I think that this wheel of
+fortune should be discussed in the report. 
+
+Next, are some questions with the implementation. Please see comments in adaboost.py.
+	- for weighted majority voting, what weight-update formula do we use 
+	  for the classifiers? 
+	- what termination criteria do we use for adaboost? Until we reach the desired
+	  number of classifiers? or until we reach a threshold? 
+	- in update_distribution(), do all probabilities get modified by beta_i? or only
+	  those that are correctly classified? if so, why do we get better results when
+	  we modify all probabilities? 
+	- decision trees completely destroys these datasets. perceptron alone does pretty
+	  terrible, on average. Adaboost is somewhere in between. Expected? 
+
+I had to forego Guru's get_result_list() because I didn't realize at the time that
+Adaboost does not use plain-voting. It uses a weighted majority voting, with another
+pass to perceptron to decide the weight of the votes. 
+
+I found two new datasets:
+	- ionosphere
+	- magic04
+
+-----------------------------------------------------------------------------------  
+
+
+
+
+
+
+
+
+
 

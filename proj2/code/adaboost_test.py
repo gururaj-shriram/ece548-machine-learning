@@ -1,7 +1,7 @@
 #
 # adaboost_test.py
 # 
-# date last modified: 12 nov 2017
+# date last modified: 22 nov 2017
 # modified last by: jerry
 # 
 #
@@ -13,22 +13,26 @@ import matplotlib.pyplot as plt
 import re
 from random import randint
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn import tree 
 #from matplotlib.colors import ListedColormap
 from perceptron import PerceptronClassifier
 from sklearn.linear_model import perceptron
 from adaboost import AdaBoost
 
 # once again, change this to switch datasets 
-FILENAME = "dataset/default.csv" 
+#FILENAME = "dataset/default.csv" 
+FILENAME = "dataset/ionosphere.dat" 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.7
 
 # learning rate for perceptron 
 ETA = 0.1
+# learning rate for perceptron when adjusting weights of classifiers 
+ETA_WEIGHTS = 0.005
 # desired threshold for error rate; 0.2 --> 20% 
-THRESHOLD = 0.2
+THRESHOLD = 0.05
 # maximum number of epochs for training
-UPPER_BOUND = 100 
+UPPER_BOUND = 100
 # verbose flag 
 IS_VERBOSE = True 
 # number of classifiers to induce in Adaboost
@@ -74,6 +78,28 @@ def load_dataset(filename):
 
 	return dataset 
 
+
+def load_dataset_ionosphere(filename):
+	"""
+	given a filename that points to a file containing the data-set, 
+	load it into memory and return an array containing this data-set
+	"""
+	dataset = []
+	# open the data-set file
+	file = open(filename, "r")
+	# we want to load this data-set into a 2D array 
+	# where each row is an example and each column is 
+	# an attribute. 
+	for line in file: 
+		example = line.strip().split(",") # a row in the data-set 
+		if example[-1] == 'g':
+			example[-1] = 1
+		else:
+			example[-1] = 0
+		dataset.append(list(map(float, example[:]))) # append it to the 2D array
+
+	return dataset 
+
 def split_attribute_and_label(dataset):
 	"""
 	split attribute vectors from their class-labels 
@@ -82,7 +108,6 @@ def split_attribute_and_label(dataset):
 	# add 0.1 because values are processed as floats and we may have 0.999...
 	class_labels = [int(row[-1] + 0.1) for row in dataset]
 	attributes = [row[0:-1] for row in dataset]
-
 	return (attributes, class_labels)
 
 def calculate_error(class_labels, hypothesis_list):
@@ -99,7 +124,8 @@ def calculate_error(class_labels, hypothesis_list):
 	return (num_errors / len(class_labels))
 
 # preprocessing: load in the dataset and split into a training and testing set 
-dataset = load_dataset(FILENAME) 
+#dataset = load_dataset(FILENAME) 
+dataset =load_dataset_ionosphere(FILENAME)
 (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
 if IS_VERBOSE:
@@ -114,15 +140,25 @@ if IS_VERBOSE:
 (test_x, test_y) = split_attribute_and_label(testing_set)
 
 # create the perceptron classifier 
-#linear_classifier = PerceptronClassifier(ETA, THRESHOLD, UPPER_BOUND, IS_VERBOSE)
+linear_classifier = PerceptronClassifier(ETA, THRESHOLD, UPPER_BOUND, False)
 # train the classifier 
-#linear_classifier.fit(train_x, train_y)
+linear_classifier.fit(train_x, train_y)
 #print("Training error rate %s" % linear_classifier.training_error_rate)
 #print(linear_classifier.weights)
 
 # test the trained classifier on the testing set 
-#result_list = linear_classifier.predict(test_x)
-#print("Testing error rate %s" % calculate_error(test_y, result_list))
+result_list = linear_classifier.predict(test_x)
+print("=========")
+print("single perceptron error rate on testing set: %s" % calculate_error(test_y, result_list))
+print("=========")
+
+# test a decision tree 
+clf = tree.DecisionTreeClassifier()
+clf = clf.fit(train_x, train_y)
+result_list = clf.predict(test_x)
+print("=========")
+print("single tree error rate on testing set: %s" % calculate_error(test_y, result_list))
+print("=========")
 
 # Create the perceptron object (net)
 #net = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, fit_intercept=True, eta0=ETA)
@@ -136,12 +172,24 @@ if IS_VERBOSE:
 #pred_t = net.predict(test_x)
 #print("scikit-learn perceptron testing error rate %s" % calculate_error(test_y, pred_t))
 
-ada_obj = AdaBoost(NUM_OF_CLASSIFIERS, ETA, UPPER_BOUND, IS_VERBOSE)
+train_subset_num = int(len(train_y)*10/NUM_OF_CLASSIFIERS)
+print("num examples in training subset : " + str(train_subset_num))
+
+ada_obj = AdaBoost(NUM_OF_CLASSIFIERS, train_subset_num, THRESHOLD, ETA, UPPER_BOUND, ETA_WEIGHTS, IS_VERBOSE)
 ada_obj.fit(train_x, train_y)
+print(ada_obj.classifiers_weights)
+
+hypothesis_list = ada_obj.predict(train_x)
+mistakes = ada_obj.xor_tuples(train_y, hypothesis_list)
+error_rate = ada_obj.classifier_error_rate(mistakes)
+
+print('training error rate %f'%error_rate)
 
 hypothesis_list = ada_obj.predict(test_x)
 mistakes = ada_obj.xor_tuples(test_y, hypothesis_list)
 error_rate = ada_obj.classifier_error_rate(mistakes)
 
-if IS_VERBOSE:
-	print("Testing set error rate after training %f" % (error_rate))
+print('testing error rate %f'%error_rate)
+
+#if IS_VERBOSE:
+#	print("Testing set error rate after training %f" % (error_rate))

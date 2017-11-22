@@ -1,7 +1,7 @@
 #
 # perceptron.py
 # 
-# date last modified: 12 nov 2017
+# date last modified: 22 nov 2017
 # modified last by: jerry
 # 
 # implementation of the linear classifier, perceptron
@@ -12,7 +12,7 @@ from optparse import OptionParser
 
 class PerceptronClassifier:
 
-	def __init__(self, eta, threshold, upper_bound, verbose = False):
+	def __init__(self, eta, threshold, upper_bound, verbose = False,equal_weight_value = 0):
 		"""
 		constructor 
 		"""
@@ -21,6 +21,7 @@ class PerceptronClassifier:
 		self.threshold = threshold
 		self.upper_bound = upper_bound
 		self.verbose = verbose
+		self.equal_weight_value = equal_weight_value
 
 		self.weights = []
 		self.training_error_rate = 0
@@ -31,26 +32,35 @@ class PerceptronClassifier:
 		"""
 		normalize the dataset with values [0,1]
 		"""
-		normal = []
-		min_tuple = data_set[0][:]
-		max_tuple = data_set[0][:]
-		# find the min and max tuple
-		for example in data_set:
-			for i in range(len(example)):
-				if example[i] < min_tuple[i]:
-					# print("i ex min", i, example[i], min_tuple[i])
-					min_tuple[i] = example[i]
-				if example[i] > max_tuple[i]:
-					max_tuple[i] = example[i]
+		try:
+			normal = []
+			min_tuple = data_set[0][:]
+			max_tuple = data_set[0][:]
+			# find the min and max tuple
+			for example in data_set:
+				for i in range(len(example)):
+					if example[i] < min_tuple[i]:
+						# print("i ex min", i, example[i], min_tuple[i])
+						min_tuple[i] = example[i]
+					if example[i] > max_tuple[i]:
+						max_tuple[i] = example[i]
 
-		for example in data_set:
-			tmp = []
-			#print(example)
-			for i in range(len(example)):
-				#print(i)
-				tmp.append((example[i] - min_tuple[i])/ (max_tuple[i] - min_tuple[i]))
-			#tmp.append(example[-1])
-			normal.append(tmp)  # append the modified tuple to normalized array
+			for example in data_set:
+				tmp = []
+				#print(example)
+				for i in range(len(example)):
+					#print(i)
+					if max_tuple[i] != min_tuple[i]:
+						tmp.append((example[i] - min_tuple[i])/ (max_tuple[i] - min_tuple[i]))
+					else:
+						tmp.append(max_tuple[i])
+				#tmp.append(example[-1])
+				normal.append(tmp)  # append the modified tuple to normalized array
+		except ZeroDivisionError:
+			print(i)
+			print(max_tuple)
+			print(min_tuple)
+
 		return normal
 
 
@@ -115,13 +125,16 @@ class PerceptronClassifier:
 
 		# equation has form: w0 + w1 * x1 + ... + wn * xn = 0 
 		# STEP 1: initialize the weights for all wi, to small random numbers
-		for i in range(len(self.normal_train_data[0])):
-			self.weights.append(random()/3)  # i'th weight
+		for i in range(len(self.normal_train_data[0]) + 1):
+			if self.equal_weight_value == 0:
+				self.weights.append(random()/3)  # i'th weight
+			else:
+				self.weights.append(self.equal_weight_value)
 
 		# now put the w0 weight at the end of the equation (list) 
 		# usually its the first weight but to make our implementation
 		# easier, we put it at the end
-		self.weights.append(random()/3)
+		#self.weights.append(random()/3)
 
 
 		epoch = 1
