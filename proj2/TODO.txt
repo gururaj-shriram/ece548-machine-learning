@@ -96,10 +96,12 @@ I found two new datasets:
 
 -----------------------------------------------------------------------------------  
 
-
-
-
-
+More possible datasets -Lloyd
+https://archive.ics.uci.edu/ml/datasets/glass+identification
+https://archive.ics.uci.edu/ml/datasets/Lymphography
+https://archive.ics.uci.edu/ml/datasets/Haberman%27s+Survival
+https://archive.ics.uci.edu/ml/datasets/Musk+%28Version+1%29
+https://archive.ics.uci.edu/ml/datasets/Statlog+%28Heart%29
 
 
 
