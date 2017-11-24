@@ -1,7 +1,7 @@
 #
 # adaboost.py
 #
-# date last modified: 22 nov 2017
+# date last modified: 23 nov 2017
 # modified last by: jerry
 #
 #
@@ -49,7 +49,7 @@ class AdaBoost:
 		if self.scikit_learn == False:
 			self.__our_perceptron()
 			self.__calculate_adaboost_weights()
-		# else:
+		#else:
 		#	self.__scikit_perceptron()
 
 	def predict(self, testing_set):

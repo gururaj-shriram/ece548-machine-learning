@@ -97,13 +97,28 @@ I found two new datasets:
 -----------------------------------------------------------------------------------  
 
 More possible datasets -Lloyd
-https://archive.ics.uci.edu/ml/datasets/glass+identification
-https://archive.ics.uci.edu/ml/datasets/Lymphography
-https://archive.ics.uci.edu/ml/datasets/Haberman%27s+Survival
-https://archive.ics.uci.edu/ml/datasets/Musk+%28Version+1%29
-https://archive.ics.uci.edu/ml/datasets/Statlog+%28Heart%29
+https://archive.ics.uci.edu/ml/datasets/glass+identification (too many classes) 
+https://archive.ics.uci.edu/ml/datasets/Lymphography (too many classes) 
+https://archive.ics.uci.edu/ml/datasets/Haberman%27s+Survival (does poorly for this classifier)
+https://archive.ics.uci.edu/ml/datasets/Musk+%28Version+1%29 (ok)
+https://archive.ics.uci.edu/ml/datasets/Statlog+%28Heart%29 (ok) 
 
+-----------------------------------------------------------------------------------
+quick update by Jerry 
 
+New datasets (thanks, Lloyd!)
+Musk --> musk.dat and musk.names
+Heart --> heart.dat and heart.names 
 
+I found a good one:
+Spam --> spambase.dat and spambase.names 
+
+Musk, Spam, and Ionosphere all do very well with sci-kit's adaboost.
+
+I added some code from scikit's adaboost to compare with ours. There is definitely
+something wrong with our implementation because their adaboost gets to around 20% 
+error while ours would get 55% or as bad as 70% (based on single run, not average). 
+
+Run the script out of the box a few times to see what I mean.
 
 
