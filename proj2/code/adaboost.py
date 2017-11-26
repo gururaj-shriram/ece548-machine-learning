@@ -1,7 +1,7 @@
 #
 # adaboost.py
 #
-# date last modified: 25 nov 2017
+# date last modified: 26 nov 2017
 # modified last by: jerry
 #
 #
@@ -12,8 +12,6 @@ from perceptron import PerceptronClassifier
 from sklearn.linear_model import perceptron
 from random import random, randint
 
-# probability that an example is our training subset
-PROBABILITY_TRAINING_SUBSET = 0.6
 # toggle verbose mode for perceptron
 PERCEPTRON_IS_VERBOSE = False 
 
@@ -41,7 +39,7 @@ class AdaBoost:
 		self.scikit_learn = use_scikit_learn
 
 	def fit(self, train_x, train_y):
-		self.train_x = train_x
+		self.train_x = train_x[:]
 		self.train_y = train_y
 		self.classifiers_list = []
 		# give all classifiers an initial weight of 1 
@@ -49,18 +47,16 @@ class AdaBoost:
 		if self.scikit_learn == False:
 			self.__our_perceptron()
 			self.__calculate_adaboost_weights()
-			#self.__calculate_adaboost_weights_using_error()
-		#else:
-		#	self.__scikit_perceptron()
 
 	def predict(self, testing_set):
 		hypothesis_list = []
+		(result_y, result_list) = self.__get_evidence_for_assembly(testing_set)
+		#for i in range(len(testing_set)):
+			#(result_y, result_list) = self.__get_evidence_for_assembly(testing_set[i])
+		#hypothesis_list.append(result_y)
 		#print(self.classifiers_weights)
-		for i in range(len(testing_set)):
-			(result_y, result_list) = self.__get_evidence_for_assembly(testing_set[i])
-			hypothesis_list.append(result_y)
-		#print(self.classifiers_weights)
-		return hypothesis_list
+		#return hypothesis_list
+		return result_list
 
 	def __our_perceptron(self):
 
@@ -150,10 +146,10 @@ class AdaBoost:
 
 		# Generates a list of indexes (from 0,...,n_training)
 		# of size train_num (user-constant) using the prob_list
-		#index_list = np.random.choice(
-		#	n_training, self.train_num, replace=False, p=prob_list)
+		index_list = np.random.choice(
+			n_training, self.train_num, replace=False, p=prob_list)
 
-		index_list = self.__wheel_of_fortune(prob_list)
+		#index_list = self.__wheel_of_fortune(prob_list)
 		for i in index_list:
 			T_i_x.append(self.train_x[i][:])
 			T_i_y.append(self.train_y[i])
@@ -172,27 +168,29 @@ class AdaBoost:
 		postitive_weight_sum = 0
 		negative_weight_sum = 0
 
-		example_list = []
-		example_list.append(example)
+		#example_list = []
+		#example_list.append(example)
+		#print(example)
 		# query the assembly about this example  
 		for i in range(len(self.classifiers_list)):
-			hypothesis = self.classifiers_list[i].predict(example_list)
+			hypothesis = self.classifiers_list[i].predict(example)
 			# hypothesis will be a list of size 1; that way, it is compatible
 			# with the perceptron implementation
-			if hypothesis[0] == 1:
-				postitive_weight_sum += self.classifiers_weights[i]
-			else:
-				negative_weight_sum += self.classifiers_weights[i]
-			hypothesis_list.append(hypothesis[0])
+			for x in range(len(hypothesis)):
+				if hypothesis[x] == 1:
+					postitive_weight_sum += self.classifiers_weights[i]
+				else:
+					negative_weight_sum += self.classifiers_weights[i]
+				hypothesis_list.append(hypothesis[x])
 
 		if postitive_weight_sum > negative_weight_sum:
 			return (1, hypothesis_list)
 		else:
 			return (0, hypothesis_list)
 
-	def __calculate_adaboost_weights_using_error(self):
-		for k in range(len(self.classifiers_list)):
-			self.classifiers_weights[k] = 1 - self.classifiers_list[k].training_error_rate
+	#def __calculate_adaboost_weights_using_error(self):
+	#	for k in range(len(self.classifiers_list)):
+	#		self.classifiers_weights[k] = 1 - self.classifiers_list[k].training_error_rate
 
 	def __calculate_adaboost_weights(self):
 		"""
@@ -204,7 +202,9 @@ class AdaBoost:
 		"""
 		for i in range(len(self.train_x)):
 			example = self.train_x[i][:]
-			(result_y, classifier_results) = self.__get_evidence_for_assembly(example)
+			example_list = []
+			example_list.append(example)
+			(result_y, classifier_results) = self.__get_evidence_for_assembly(example_list)
 			if(self.train_y[i] != result_y):
 				# Each time the assembly misclassifies an example, increase or 
 				# decrease the weights of the individual classifiers according to 
@@ -260,10 +260,13 @@ class AdaBoost:
 		beta_i = epsilon_i / (1 - epsilon_i)
 
 		# STEP 4 modify probabilities of correctly classified examples 
+		# it is possible that beta_i can be 0...
+		if beta_i == 0:
+			beta_i += 0.01
 		# using p_i+1(ex) = p_i(ex) * beta_i 
 		for j in range(len(self.train_x)):
 			# do all probabilities get modified by beta_i?? 
-			if mistakes[j] == 0: # when commented out, gets better results
+			if mistakes[j] == 0: 
 				prob_list[j] = prob_list[j] * beta_i 
 
 		# STEP 5 normalize all probabilities

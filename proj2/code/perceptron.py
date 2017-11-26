@@ -1,7 +1,7 @@
 #
 # perceptron.py
 # 
-# date last modified: 25 nov 2017
+# date last modified: 26 nov 2017
 # modified last by: jerry
 # 
 # implementation of the linear classifier, perceptron
@@ -189,8 +189,11 @@ class PerceptronClassifier:
 		"""
 		result_list = []
 		testing_set_norm = self.__normalize(testing_set)
+		#print(testing_set_norm)
+
 		for k in range(len(testing_set_norm)):
 			example = testing_set_norm[k][:]
+			#print("normalized: " + str(example))
 			# determine the hypothesis, h
 			hypothesis = 1 if self.__calculate_evidence(self.weights, example) > 0 else 0
 			result_list.append(int(hypothesis))

@@ -1,7 +1,7 @@
 #
 # adaboost_test.py
 # 
-# date last modified: 25 nov 2017
+# date last modified: 26 nov 2017
 # modified last by: jerry
 # 
 #
@@ -24,15 +24,16 @@ from adaboost import AdaBoost
 # don't forget to toggle load_dataset() as well 
 
 #FILENAME = "dataset/default.csv" 
-FILENAME = "dataset/ionosphere.dat" 
-#FILENAME = "dataset/musk.dat"  
+#FILENAME = "dataset/ionosphere.dat" 
+FILENAME = "dataset/musk.dat"  
 #FILENAME = "dataset/spambase.dat" 
+#FILENAME = "dataset/animals.dat" 
 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.5
 
 # learning rate for perceptron 
-ETA = 0.1
+ETA = 0.6
 # learning rate for perceptron when adjusting weights of classifiers 
 ETA_WEIGHTS = 0.01
 # desired threshold for error rate; 0.2 --> 20% 
@@ -167,47 +168,8 @@ def calculate_error(class_labels, hypothesis_list):
 
 	return (num_errors / len(class_labels))
 
-def average_for_runs(num_runs, train_subset_num, dataset, num_classifiers):
-	"""
-	run our adaboost for a specified number of times. 
-	return the average error rate over the total number of runs
-	"""
-	total_error_testing = 0
-	total_error_training = 0
-
-	# here we perform random subsampling on the dataset. 
-	# for the user-specified number of runs (say 100), continue the division
-	# of the dataset into a training set and testing set. collect the accuracy
-	# rate and divide by 100 to compute an overall average 
-	for i in range(num_runs):
-		training_set = []
-		testing_set = []
-		# randomly splits the dataset into a training and testing set 
-		(training_set, testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
-		(train_x, train_y) = split_attribute_and_label(training_set)
-		(test_x, test_y) = split_attribute_and_label(testing_set)
-		# create our adaboost classifier 
-		ada_obj = AdaBoost(num_classifiers, train_subset_num, THRESHOLD, 
-			ETA, UPPER_BOUND, ETA_WEIGHTS, False)
-		# run our adaboost classifier 
-		ada_obj.fit(train_x, train_y)
-
-		hypothesis_list = ada_obj.predict(train_x)
-		mistakes = ada_obj.xor_tuples(train_y, hypothesis_list)
-		error_rate_train = ada_obj.classifier_error_rate(mistakes)
-
-		hypothesis_list = ada_obj.predict(test_x)
-		mistakes = ada_obj.xor_tuples(test_y, hypothesis_list)
-		error_rate_test = ada_obj.classifier_error_rate(mistakes)
-		#print('--> run (%d): testing error rate %f'% (i, error_rate))
-
-		total_error_training += error_rate_train
-		total_error_testing += error_rate_test
-	
-	# finally divide by the number of runs to get the overall average 
-	return (total_error_training/float(num_runs), total_error_testing/float(num_runs))
-
 def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
+	testing_error_list = []
 	for cl in range(1, max_classes+1, 2):
 		train_error = []
 		testing_error = []
@@ -220,7 +182,7 @@ def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
 			# train_x: the attribute vector; train_y: the class_label  
 			(train_x, train_y) = split_attribute_and_label(training_set)
 			(test_x, test_y) = split_attribute_and_label(testing_set)	
-			train_subset_num = int(len(train_y)*.5) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
+			train_subset_num = int(len(train_y) * 0.5) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
 
 			ada_obj = AdaBoost(cl, train_subset_num, THRESHOLD, ETA, UPPER_BOUND, ETA_WEIGHTS, False)
 			ada_obj.fit(train_x, train_y)
@@ -238,24 +200,25 @@ def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
 			pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
 							fit_intercept=True, eta0=ETA)
 
-
 			bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=cl)
 			bdt.fit(train_x, train_y)
 			result_list = bdt.predict(test_x)
 			scikit_error.append(calculate_error(test_y, result_list))
+
 		print("Train avg for %s   %s"%(cl,sum(train_error)/len(train_error)))
 		print("Testing avg for %s   %s"%(cl,sum(testing_error)/len(testing_error)))
+		testing_error_list.append((sum(testing_error)/len(testing_error)) * 100)
 		print("Scikit adaboost avg for %s   %s"%(cl,sum(scikit_error)/len(scikit_error)))
 		del train_error[:]
 		del testing_error[:]
 		del scikit_error[:]
 
-
+	return testing_error_list
 
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
-dataset =load_dataset_ionosphere(FILENAME)
-#dataset =load_dataset_musk(FILENAME)
+#dataset =load_dataset_ionosphere(FILENAME)
+dataset =load_dataset_musk(FILENAME)
 #dataset =load_dataset_heart(FILENAME)
 
 (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
@@ -348,4 +311,5 @@ print("=========")
 # #average_error_rate = average_for_runs(10, train_subset_num, 10)
 # #print("average error rate : %f" % average_error_rate) 
 
-adaboost_avg_run(20, 20, dataset)
+lis = adaboost_avg_run(20, 5, dataset)
+print(lis)
