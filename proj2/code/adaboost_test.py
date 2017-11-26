@@ -1,7 +1,7 @@
 #
 # adaboost_test.py
 # 
-# date last modified: 23 nov 2017
+# date last modified: 25 nov 2017
 # modified last by: jerry
 # 
 #
@@ -24,18 +24,17 @@ from adaboost import AdaBoost
 # don't forget to toggle load_dataset() as well 
 
 #FILENAME = "dataset/default.csv" 
-#FILENAME = "dataset/ionosphere.dat" 
+FILENAME = "dataset/ionosphere.dat" 
 #FILENAME = "dataset/musk.dat"  
-#FILENAME = "dataset/heart.dat"
-FILENAME = "dataset/spambase.dat" 
+#FILENAME = "dataset/spambase.dat" 
 
 # probability of an example being in the training set 
-PROBABILITY_TRAINING_SET = 0.7
+PROBABILITY_TRAINING_SET = 0.5
 
 # learning rate for perceptron 
 ETA = 0.1
 # learning rate for perceptron when adjusting weights of classifiers 
-ETA_WEIGHTS = 0.005
+ETA_WEIGHTS = 0.01
 # desired threshold for error rate; 0.2 --> 20% 
 THRESHOLD = 0.05
 # maximum number of epochs for training
@@ -43,7 +42,7 @@ UPPER_BOUND = 100
 # verbose flag 
 IS_VERBOSE = True 
 # number of classifiers to induce in Adaboost
-NUM_OF_CLASSIFIERS = 10
+NUM_OF_CLASSIFIERS = 20
 
 def split_dataset(examples, prob_training):
 	"""
@@ -168,7 +167,7 @@ def calculate_error(class_labels, hypothesis_list):
 
 	return (num_errors / len(class_labels))
 
-def average_for_runs(num_runs, train_subset_num, num_classifiers):
+def average_for_runs(num_runs, train_subset_num, dataset, num_classifiers):
 	"""
 	run our adaboost for a specified number of times. 
 	return the average error rate over the total number of runs
@@ -208,9 +207,54 @@ def average_for_runs(num_runs, train_subset_num, num_classifiers):
 	# finally divide by the number of runs to get the overall average 
 	return (total_error_training/float(num_runs), total_error_testing/float(num_runs))
 
+def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
+	for cl in range(1, max_classes+1, 2):
+		train_error = []
+		testing_error = []
+		scikit_error = []
+		for i in range(avg_num_of_run):
+			(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
+			# because datasets sometimes place the class attribute at the end or even 
+			# at the beginning or the middle, we'll separate the attribute vector from
+			# the class-label. also note that this is the way scikit-learn does it. 
+			# train_x: the attribute vector; train_y: the class_label  
+			(train_x, train_y) = split_attribute_and_label(training_set)
+			(test_x, test_y) = split_attribute_and_label(testing_set)	
+			train_subset_num = int(len(train_y)*.5) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
+
+			ada_obj = AdaBoost(cl, train_subset_num, THRESHOLD, ETA, UPPER_BOUND, ETA_WEIGHTS, False)
+			ada_obj.fit(train_x, train_y)
+
+			hypothesis_list = ada_obj.predict(train_x)
+			mistakes = ada_obj.xor_tuples(train_y, hypothesis_list)
+			error_rate_train = ada_obj.classifier_error_rate(mistakes)
+
+			hypothesis_list = ada_obj.predict(test_x)
+			mistakes = ada_obj.xor_tuples(test_y, hypothesis_list)
+			error_rate_test = ada_obj.classifier_error_rate(mistakes)
+			train_error.append(error_rate_train)
+			testing_error.append(error_rate_test)
+
+			pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
+							fit_intercept=True, eta0=ETA)
+
+
+			bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=cl)
+			bdt.fit(train_x, train_y)
+			result_list = bdt.predict(test_x)
+			scikit_error.append(calculate_error(test_y, result_list))
+		print("Train avg for %s   %s"%(cl,sum(train_error)/len(train_error)))
+		print("Testing avg for %s   %s"%(cl,sum(testing_error)/len(testing_error)))
+		print("Scikit adaboost avg for %s   %s"%(cl,sum(scikit_error)/len(scikit_error)))
+		del train_error[:]
+		del testing_error[:]
+		del scikit_error[:]
+
+
+
 # preprocessing: load in the dataset and split into a training and testing set 
-dataset = load_dataset(FILENAME) 
-#dataset =load_dataset_ionosphere(FILENAME)
+#dataset = load_dataset(FILENAME) 
+dataset =load_dataset_ionosphere(FILENAME)
 #dataset =load_dataset_musk(FILENAME)
 #dataset =load_dataset_heart(FILENAME)
 
@@ -227,18 +271,18 @@ if IS_VERBOSE:
 (train_x, train_y) = split_attribute_and_label(training_set)
 (test_x, test_y) = split_attribute_and_label(testing_set)
 
-# create the perceptron classifier 
-linear_classifier = PerceptronClassifier(ETA, THRESHOLD, UPPER_BOUND, False)
-# train the classifier 
-linear_classifier.fit(train_x, train_y)
-#print("Training error rate %s" % linear_classifier.training_error_rate)
-#print(linear_classifier.weights)
+# # create the perceptron classifier 
+# linear_classifier = PerceptronClassifier(ETA, THRESHOLD, UPPER_BOUND, True)
+# # train the classifier 
+# linear_classifier.fit(train_x, train_y)
+# print("Training error rate %s" % linear_classifier.training_error_rate)
+# #print(linear_classifier.weights)
 
-# test the trained classifier on the testing set 
-result_list = linear_classifier.predict(test_x)
-print("=========")
-print("our perceptron error rate on test: %s" % calculate_error(test_y, result_list))
-print("=========")
+# # test the trained classifier on the testing set 
+# result_list = linear_classifier.predict(test_x)
+# print("=========")
+# print("our perceptron error rate on test: %s" % calculate_error(test_y, result_list))
+# print("=========")
 
 # test their perceptron and adaboost for comparison 
 p = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
@@ -246,6 +290,10 @@ p = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None,
 p.fit(train_x, train_y)
 result_list = p.predict(test_x)
 print("their perceptron error on test: %s" % calculate_error(test_y, result_list))
+
+pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
+							fit_intercept=True, eta0=ETA)
+
 
 bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=NUM_OF_CLASSIFIERS)
 bdt.fit(train_x, train_y)
@@ -260,44 +308,44 @@ print("=========")
 print("single tree error rate on testing set: %s" % calculate_error(test_y, result_list))
 print("=========")
 
-# Create the perceptron object (net)
-#net = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, fit_intercept=True, eta0=ETA)
+# # Create the perceptron object (net)
+# #net = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, fit_intercept=True, eta0=ETA)
 
-# Train the perceptron object (net)
-#net.fit(train_x,train_y)
+# # Train the perceptron object (net)
+# #net.fit(train_x,train_y)
 
-#pred = net.predict(train_x)
-#print("scikit-learn perceptron training error rate %s" % calculate_error(train_y, pred))
+# #pred = net.predict(train_x)
+# #print("scikit-learn perceptron training error rate %s" % calculate_error(train_y, pred))
 
-#pred_t = net.predict(test_x)
-#print("scikit-learn perceptron testing error rate %s" % calculate_error(test_y, pred_t))
+# #pred_t = net.predict(test_x)
+# #print("scikit-learn perceptron testing error rate %s" % calculate_error(test_y, pred_t))
 
-# need to find good number for training subset size
-train_subset_num = int(len(train_y) / 6) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
-print("num examples in training subset : " + str(train_subset_num))
+# # need to find good number for training subset size
+# train_subset_num = int(len(train_y)*.5) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
+# print("num examples in training subset : " + str(train_subset_num))
 
-ada_obj = AdaBoost(NUM_OF_CLASSIFIERS, train_subset_num, THRESHOLD, ETA, UPPER_BOUND, ETA_WEIGHTS, IS_VERBOSE)
-ada_obj.fit(train_x, train_y)
-print(ada_obj.classifiers_weights)
+# ada_obj = AdaBoost(NUM_OF_CLASSIFIERS, train_subset_num, THRESHOLD, ETA, UPPER_BOUND, ETA_WEIGHTS, IS_VERBOSE)
+# ada_obj.fit(train_x, train_y)
+# print(ada_obj.classifiers_weights)
 
-hypothesis_list = ada_obj.predict(train_x)
-mistakes = ada_obj.xor_tuples(train_y, hypothesis_list)
-error_rate = ada_obj.classifier_error_rate(mistakes)
+# hypothesis_list = ada_obj.predict(train_x)
+# mistakes = ada_obj.xor_tuples(train_y, hypothesis_list)
+# error_rate = ada_obj.classifier_error_rate(mistakes)
 
-print('training error rate %f'%error_rate)
+# print('training error rate %f'%error_rate)
 
-hypothesis_list = ada_obj.predict(test_x)
-mistakes = ada_obj.xor_tuples(test_y, hypothesis_list)
-error_rate = ada_obj.classifier_error_rate(mistakes)
+# hypothesis_list = ada_obj.predict(test_x)
+# mistakes = ada_obj.xor_tuples(test_y, hypothesis_list)
+# error_rate = ada_obj.classifier_error_rate(mistakes)
 
-print('testing error rate %f'%error_rate)
+# print('testing error rate %f'%error_rate)
 
-#(average_train, average_test) = average_for_runs(10, train_subset_num, NUM_OF_CLASSIFIERS)
+# #(average_train, average_test) = average_for_runs(10, train_subset_num, NUM_OF_CLASSIFIERS)
 
-#print('average train error rate %f'%average_train)
-#print('average test error rate %f'%average_test)
+# #print('average train error rate %f'%average_train)
+# #print('average test error rate %f'%average_test)
 
-#average_error_rate = average_for_runs(10, train_subset_num, 10)
-#print("average error rate : %f" % average_error_rate) 
+# #average_error_rate = average_for_runs(10, train_subset_num, 10)
+# #print("average error rate : %f" % average_error_rate) 
 
-
+adaboost_avg_run(20, 20, dataset)

@@ -1,7 +1,7 @@
 #
 # perceptron.py
 # 
-# date last modified: 22 nov 2017
+# date last modified: 25 nov 2017
 # modified last by: jerry
 # 
 # implementation of the linear classifier, perceptron
@@ -127,7 +127,7 @@ class PerceptronClassifier:
 		# STEP 1: initialize the weights for all wi, to small random numbers
 		for i in range(len(self.normal_train_data[0]) + 1):
 			if self.equal_weight_value == 0:
-				self.weights.append(random()/3)  # i'th weight
+				self.weights.append(random()/10)  # i'th weight
 			else:
 				self.weights.append(self.equal_weight_value)
 
@@ -188,8 +188,9 @@ class PerceptronClassifier:
 		:return: list of hypotheses for each example in the testing set
 		"""
 		result_list = []
-		for k in range(len(testing_set)):
-			example = testing_set[k][:]
+		testing_set_norm = self.__normalize(testing_set)
+		for k in range(len(testing_set_norm)):
+			example = testing_set_norm[k][:]
 			# determine the hypothesis, h
 			hypothesis = 1 if self.__calculate_evidence(self.weights, example) > 0 else 0
 			result_list.append(int(hypothesis))

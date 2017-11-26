@@ -1,7 +1,7 @@
 #
 # adaboost.py
 #
-# date last modified: 23 nov 2017
+# date last modified: 25 nov 2017
 # modified last by: jerry
 #
 #
@@ -49,14 +49,17 @@ class AdaBoost:
 		if self.scikit_learn == False:
 			self.__our_perceptron()
 			self.__calculate_adaboost_weights()
+			#self.__calculate_adaboost_weights_using_error()
 		#else:
 		#	self.__scikit_perceptron()
 
 	def predict(self, testing_set):
 		hypothesis_list = []
+		#print(self.classifiers_weights)
 		for i in range(len(testing_set)):
 			(result_y, result_list) = self.__get_evidence_for_assembly(testing_set[i])
 			hypothesis_list.append(result_y)
+		#print(self.classifiers_weights)
 		return hypothesis_list
 
 	def __our_perceptron(self):
@@ -110,6 +113,29 @@ class AdaBoost:
 			# update probablity for the next i+1 classifier
 			prob_list = self.__update_distribution(prob_list, mistakes)
 
+	def __wheel_of_fortune(self, prob_list):
+		train_subset = set()
+		fortune_value = [prob_list[0]]
+		for i in range(1, len(prob_list)):
+			fortune_value.append(fortune_value[i-1]+prob_list[i])
+		
+		while len(train_subset) < self.train_num:
+			cur_fortune = random()
+			s = 0
+			e = len(fortune_value)-1
+			mid = 0
+			while(s <= e):
+				mid = int((s + e)/2)
+				if fortune_value[mid] == cur_fortune:
+					break 
+				elif fortune_value[mid] > cur_fortune:
+					e = mid - 1
+				else:
+					s = mid + 1
+			train_subset.add(mid)	
+		return train_subset
+
+
 	def __training_set_Ti_with_probablity(self, prob_list):
 		"""
 		create the training subset Ti given a probability distribution 
@@ -117,16 +143,17 @@ class AdaBoost:
 		T_i_x = [] # attribute vector
 		T_i_y = [] # class label (in parallel with attr vector) 
 
-		n_training = len(prob_list)
+		n_training = len(self.train_x)
 
 		# this np.random.choice() is an implementation of the 
 		# wheel of fortune; see todo.txt
 
 		# Generates a list of indexes (from 0,...,n_training)
 		# of size train_num (user-constant) using the prob_list
-		index_list = np.random.choice(
-			n_training, self.train_num, replace=False, p=prob_list)
+		#index_list = np.random.choice(
+		#	n_training, self.train_num, replace=False, p=prob_list)
 
+		index_list = self.__wheel_of_fortune(prob_list)
 		for i in index_list:
 			T_i_x.append(self.train_x[i][:])
 			T_i_y.append(self.train_y[i])
@@ -163,6 +190,10 @@ class AdaBoost:
 		else:
 			return (0, hypothesis_list)
 
+	def __calculate_adaboost_weights_using_error(self):
+		for k in range(len(self.classifiers_list)):
+			self.classifiers_weights[k] = 1 - self.classifiers_list[k].training_error_rate
+
 	def __calculate_adaboost_weights(self):
 		"""
 		final classification decision is reached by a weighted majority voting 
@@ -172,7 +203,7 @@ class AdaBoost:
 		we use perceptron learning to modify and update these weights 
 		"""
 		for i in range(len(self.train_x)):
-			example = self.train_x[i]
+			example = self.train_x[i][:]
 			(result_y, classifier_results) = self.__get_evidence_for_assembly(example)
 			if(self.train_y[i] != result_y):
 				# Each time the assembly misclassifies an example, increase or 
@@ -183,7 +214,7 @@ class AdaBoost:
 					# note: i am a little unsure about the weight-updating formula...
 					#delta_weight = self.weight_learning_rate * abs(classifier_results[k] - result_y)
 					delta_weight = self.weight_learning_rate * (self.train_y[i] - classifier_results[k])
-					self.classifiers_weights[k] -= delta_weight
+					self.classifiers_weights[k] += delta_weight
 
 	def __get_result_list(self, testing_set):
 		voted_result_list = []
@@ -243,10 +274,9 @@ class AdaBoost:
 		return prob_list
 
 	def xor_tuples(self, class_labels, hypothesis_list):
-		abzip = zip(class_labels, hypothesis_list)
 		xor_val = []
-		for v in abzip:
-			if v[0] == v[1]:
+		for i in range(len(class_labels)):
+			if class_labels[i] == hypothesis_list[i]:
 				xor_val.append(0)
 			else:
 				xor_val.append(1)
