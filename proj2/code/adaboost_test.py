@@ -25,11 +25,11 @@ from adaboost import classifier_error_rate
 
 #FILENAME = "dataset/default.csv" 
 #FILENAME = "dataset/ionosphere.dat" 
-FILENAME = "dataset/musk.dat"  
+#FILENAME = "dataset/musk.dat"  
 #FILENAME = "dataset/heart.dat"  
 #FILENAME = "dataset/spambase.dat" 
 #FILENAME = "dataset/animals.dat" 
-#FILENAME = "dataset/ecoli.dat"
+FILENAME = "dataset/ecoli.dat"
 #FILENAME = "dataset/fertility.dat"
 
 # probability of an example being in the training set 
@@ -243,7 +243,7 @@ def adaboost_avg_run(max_classes, avg_num_of_run, training_set, testing_set):
 	# print(len(train_x))	
 	train_subset_num = int(len(train_y) * 0.2) 
 
-	for cl in range(1, max_classes+1, 3):
+	for cl in range(1, max_classes+1, 2):
 		train_error = []
 		testing_error = []
 		scikit_error = []
@@ -335,9 +335,9 @@ def plot_testing_set_errors(error_list, decision_tree_avg_error, perceptron_avg_
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
 #dataset =load_dataset_ionosphere(FILENAME)
-dataset =load_dataset_musk(FILENAME)
+#dataset =load_dataset_musk(FILENAME)
 #dataset =load_dataset_heart(FILENAME)
-#dataset =load_dataset_ecoli(FILENAME)
+dataset =load_dataset_ecoli(FILENAME)
 
 (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
@@ -433,7 +433,7 @@ print("=========")
 # split dataset only once
 (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 # error_list = adaboost_avg_run(40, 5, training_set, testing_set)
-error_list = adaboost_avg_run(25, 5, training_set, testing_set)
+error_list = adaboost_avg_run(40, 5, training_set, testing_set)
 decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
 perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
 plot_errors(error_list)
