@@ -1,8 +1,8 @@
 #
 # adaboost_test.py
 # 
-# date last modified: 26 nov 2017
-# modified last by: jerry
+# date last modified: 27 nov 2017
+# modified last by: guru
 # 
 #
 
@@ -14,7 +14,6 @@ import re
 from random import randint
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import tree 
-#from matplotlib.colors import ListedColormap
 from perceptron import PerceptronClassifier
 from sklearn.linear_model import perceptron
 from sklearn.ensemble import AdaBoostClassifier
@@ -30,16 +29,16 @@ FILENAME = "dataset/musk.dat"
 #FILENAME = "dataset/animals.dat" 
 
 # probability of an example being in the training set 
-PROBABILITY_TRAINING_SET = 0.5
+PROBABILITY_TRAINING_SET = 0.65
 
 # learning rate for perceptron 
-ETA = 0.6
+ETA = 0.05
 # learning rate for perceptron when adjusting weights of classifiers 
-ETA_WEIGHTS = 0.01
+ETA_WEIGHTS = 0.0001
 # desired threshold for error rate; 0.2 --> 20% 
 THRESHOLD = 0.05
 # maximum number of epochs for training
-UPPER_BOUND = 100
+UPPER_BOUND = 500
 # verbose flag 
 IS_VERBOSE = True 
 # number of classifiers to induce in Adaboost
@@ -168,22 +167,36 @@ def calculate_error(class_labels, hypothesis_list):
 
 	return (num_errors / len(class_labels))
 
+class ErrorWrapper:
+	def __init__(self, num_classifiers, train_error, test_error, scikit_error):
+		self.num_classifiers = num_classifiers
+		self.train_error = train_error
+		self.test_error = test_error
+		self.scikit_error = scikit_error
+
+	def __str__(self):
+		return "# of Classifiers {0}, Train Error: {1}, Test Error: {2}, Scikit Error: {3}".format(
+			self.num_classifiers, self.train_error, self.test_error, self.scikit_error)
+
 def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
 	testing_error_list = []
+	all_error_list = []
+
+	(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
+	# because datasets sometimes place the class attribute at the end or even 
+	# at the beginning or the middle, we'll separate the attribute vector from
+	# the class-label. also note that this is the way scikit-learn does it. 
+	# train_x: the attribute vector; train_y: the class_label  
+	(train_x, train_y) = split_attribute_and_label(training_set)
+	(test_x, test_y) = split_attribute_and_label(testing_set)	
+	train_subset_num = int(len(train_y) * 0.5) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
+
 	for cl in range(1, max_classes+1, 2):
 		train_error = []
 		testing_error = []
 		scikit_error = []
 		for i in range(avg_num_of_run):
-			(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
-			# because datasets sometimes place the class attribute at the end or even 
-			# at the beginning or the middle, we'll separate the attribute vector from
-			# the class-label. also note that this is the way scikit-learn does it. 
-			# train_x: the attribute vector; train_y: the class_label  
-			(train_x, train_y) = split_attribute_and_label(training_set)
-			(test_x, test_y) = split_attribute_and_label(testing_set)	
-			train_subset_num = int(len(train_y) * 0.5) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
-
+			
 			ada_obj = AdaBoost(cl, train_subset_num, THRESHOLD, ETA, UPPER_BOUND, ETA_WEIGHTS, False)
 			ada_obj.fit(train_x, train_y)
 
@@ -205,15 +218,47 @@ def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
 			result_list = bdt.predict(test_x)
 			scikit_error.append(calculate_error(test_y, result_list))
 
-		print("Train avg for %s   %s"%(cl,sum(train_error)/len(train_error)))
-		print("Testing avg for %s   %s"%(cl,sum(testing_error)/len(testing_error)))
+		errors = ErrorWrapper(
+			cl, 
+			sum(train_error)/len(train_error), 
+			sum(testing_error)/len(testing_error), 
+			sum(scikit_error)/len(scikit_error))
+
+		all_error_list.append(errors)
+		print("Train avg for %s   %s"%(cl, errors.train_error))
+		print("Testing avg for %s   %s"%(cl, errors.test_error))
 		testing_error_list.append((sum(testing_error)/len(testing_error)) * 100)
-		print("Scikit adaboost avg for %s   %s"%(cl,sum(scikit_error)/len(scikit_error)))
+		print("Scikit adaboost avg for %s   %s"%(cl, errors.scikit_error))
 		del train_error[:]
 		del testing_error[:]
 		del scikit_error[:]
 
-	return testing_error_list
+	#return testing_error_list
+	return all_error_list
+
+def plot_errors(error_list):
+	num_classifiers_list = []
+	train_error_list = []
+	test_error_list = []
+	scikit_error_list = []
+
+	tmp = FILENAME.split('/')
+	title = tmp[1].split('.')[0].title()
+	
+	for error in error_list:
+		num_classifiers_list.append(error.num_classifiers)
+		train_error_list.append(error.train_error)
+		test_error_list.append(error.test_error)
+		scikit_error_list.append(error.scikit_error)
+
+	plt.plot(num_classifiers_list, train_error_list, 'r-')
+	plt.plot(num_classifiers_list, test_error_list, 'g-')
+	plt.plot(num_classifiers_list, scikit_error_list, 'b-')
+	plt.legend(['Training Set Error', 'Testing Set Error', 'Scikit Error'], loc = 'upper left')
+	plt.xlabel('Number of Classifiers')
+	plt.ylabel('Error Rate')
+	plt.title('Adaboost Error Rates on the {0} Dataset'.format(title))
+	plt.savefig('{0}.png'.format(title))
 
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
@@ -311,5 +356,6 @@ print("=========")
 # #average_error_rate = average_for_runs(10, train_subset_num, 10)
 # #print("average error rate : %f" % average_error_rate) 
 
-lis = adaboost_avg_run(20, 5, dataset)
-print(lis)
+#lis = adaboost_avg_run(20, 5, dataset)
+error_list = adaboost_avg_run(20, 1, dataset)
+plot_errors(error_list)

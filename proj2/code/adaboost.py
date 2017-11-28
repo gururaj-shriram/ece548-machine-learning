@@ -1,8 +1,8 @@
 #
 # adaboost.py
 #
-# date last modified: 26 nov 2017
-# modified last by: jerry
+# date last modified: 27 nov 2017
+# modified last by: guru
 #
 #
 
@@ -42,15 +42,15 @@ class AdaBoost:
 		self.train_x = train_x[:]
 		self.train_y = train_y
 		self.classifiers_list = []
-		# give all classifiers an initial weight of 1 
-		self.classifiers_weights = [1] * self.num_of_classifiers
+		# give all classifiers an initial weight of 1 / num_of_classifiers
+		self.classifiers_weights = [(1.0 / self.num_of_classifiers)] * self.num_of_classifiers
 		if self.scikit_learn == False:
 			self.__our_perceptron()
 			self.__calculate_adaboost_weights()
 
 	def predict(self, testing_set):
 		hypothesis_list = []
-		(result_y, result_list) = self.__get_evidence_for_assembly(testing_set)
+		(classifier_results, result_list) = self.__get_evidence_for_assembly(testing_set)
 		#for i in range(len(testing_set)):
 			#(result_y, result_list) = self.__get_evidence_for_assembly(testing_set[i])
 		#hypothesis_list.append(result_y)
@@ -156,7 +156,7 @@ class AdaBoost:
 
 		return (T_i_x, T_i_y)
 
-	def __get_evidence_for_assembly(self, example):
+	def __get_evidence_for_assembly(self, example_list):
 		"""
 		performs *weighted majority voting* where we sum up all weights 
 		in support of the positive and negative classes
@@ -164,29 +164,62 @@ class AdaBoost:
 		the class with the overwhelming amount of evidence is the class the 
 		"assembly" decides to label the example with 
 		"""
-		hypothesis_list = [] # which class does Ci think this example belongs to?
-		postitive_weight_sum = 0
-		negative_weight_sum = 0
+		hypothesis_list = [] # list of hypotheses from each classifier
+		result_list = [] # which class does the whole ensemble think this example belongs to?
 
-		#example_list = []
-		#example_list.append(example)
-		#print(example)
-		# query the assembly about this example  
+		# get a hypothesis list for each classifier
 		for i in range(len(self.classifiers_list)):
-			hypothesis = self.classifiers_list[i].predict(example)
-			# hypothesis will be a list of size 1; that way, it is compatible
-			# with the perceptron implementation
-			for x in range(len(hypothesis)):
-				if hypothesis[x] == 1:
-					postitive_weight_sum += self.classifiers_weights[i]
-				else:
-					negative_weight_sum += self.classifiers_weights[i]
-				hypothesis_list.append(hypothesis[x])
+			hypothesis = self.classifiers_list[i].predict(example_list) # a list of hypotheses for Ci
+			hypothesis_list.append(hypothesis) # a master list of all hypotheses for C1, ..., Cn
 
-		if postitive_weight_sum > negative_weight_sum:
-			return (1, hypothesis_list)
-		else:
-			return (0, hypothesis_list)
+		# iterate through every example in the example_list
+		for i in range(len(hypothesis_list[0])):
+			postitive_weight_sum = 0
+			negative_weight_sum = 0
+			for j in range(len(self.classifiers_list)):
+				# hypothesis_list[j][i] stores the hypothesis of the ith example with the jth classifier
+				if hypothesis_list[j][i] == 1:
+					postitive_weight_sum += self.classifiers_weights[j]
+				else:
+					negative_weight_sum += self.classifiers_weights[j]
+
+			# this is the hypothesis for the whole ensemble
+			hypothesis = 1 if postitive_weight_sum > negative_weight_sum else 0
+			result_list.append(hypothesis)
+
+		return (hypothesis_list, result_list)
+
+	# def __get_evidence_for_assembly(self, example_list):
+	# 	"""
+	# 	performs *weighted majority voting* where we sum up all weights 
+	# 	in support of the positive and negative classes
+
+	# 	the class with the overwhelming amount of evidence is the class the 
+	# 	"assembly" decides to label the example with 
+	# 	"""
+	# 	hypothesis_list = [] # which class does Ci think this example belongs to?
+	# 	postitive_weight_sum = 0
+	# 	negative_weight_sum = 0
+
+	# 	#example_list = []
+	# 	#example_list.append(example)
+	# 	#print(example)
+	# 	# query the assembly about this example  
+	# 	for i in range(len(self.classifiers_list)):
+	# 		hypothesis = self.classifiers_list[i].predict(example_list)
+	# 		# hypothesis will be a list of size 1; that way, it is compatible
+	# 		# with the perceptron implementation
+	# 		for x in range(len(hypothesis)):
+	# 			if hypothesis[x] == 1:
+	# 				postitive_weight_sum += self.classifiers_weights[i]
+	# 			else:
+	# 				negative_weight_sum += self.classifiers_weights[i]
+	# 			hypothesis_list.append(hypothesis[x])
+
+	# 	if postitive_weight_sum > negative_weight_sum:
+	# 		return (1, hypothesis_list)
+	# 	else:
+	# 		return (0, hypothesis_list)
 
 	#def __calculate_adaboost_weights_using_error(self):
 	#	for k in range(len(self.classifiers_list)):
@@ -200,51 +233,40 @@ class AdaBoost:
 
 		we use perceptron learning to modify and update these weights 
 		"""
+
+		hypothesis_list, classifier_results = self.__get_evidence_for_assembly(self.train_x)
+
 		for i in range(len(self.train_x)):
-			example = self.train_x[i][:]
-			example_list = []
-			example_list.append(example)
-			(result_y, classifier_results) = self.__get_evidence_for_assembly(example_list)
-			if(self.train_y[i] != result_y):
-				# Each time the assembly misclassifies an example, increase or 
-				# decrease the weights of the individual classifiers according to 
-				# the relation between the assembly hypothesis and the 
-				# training example's true class 
+			if self.train_y[i] != classifier_results[i]:
 				for k in range(len(self.classifiers_weights)):
 					# note: i am a little unsure about the weight-updating formula...
 					#delta_weight = self.weight_learning_rate * abs(classifier_results[k] - result_y)
-					delta_weight = self.weight_learning_rate * (self.train_y[i] - classifier_results[k])
-					self.classifiers_weights[k] += delta_weight
+					delta_weight = self.weight_learning_rate * (self.train_y[i] - hypothesis_list[k][i])
+					self.classifiers_weights[k] += delta_weight				
 
-	def __get_result_list(self, testing_set):
-		voted_result_list = []
-		all_results = []
+	# def __calculate_adaboost_weights(self):
+	# 	"""
+	# 	final classification decision is reached by a weighted majority voting 
+	# 	where each classifier has been assigned a certain weight; each classifier
+	# 	has a different strength defined by its weight wi 
 
-		# predict values for each example in the training set with each
-		# classifier
-		for classifier in self.classifiers_list:
-			all_results.append(classifier.predict(testing_set))
-
-		# for each attribute value, choose the value with the highest frequency
-		# of votes from the classifiers
-		for i in range(len(all_results[0])):
-			i_attribute_values = []
-			for j in range(len(all_results)):
-				i_attribute_values.append(all_results[j][i])
-
-			c = Counter(i_attribute_values).most_common()
-
-			max_results = []
-			for value, count in c:
-				if count == c[0][1]:
-					max_results.append(value)
-				else:
-					break
-
-			voted_result_list.append(
-				max_results[randint(0, len(max_results) - 1)])
-
-		return voted_result_list
+	# 	we use perceptron learning to modify and update these weights 
+	# 	"""
+	# 	for i in range(len(self.train_x)):
+	# 		example = self.train_x[i][:]
+	# 		example_list = []
+	# 		example_list.append(example)
+	# 		(result_y, classifier_results) = self.__get_evidence_for_assembly(example_list)
+	# 		if(self.train_y[i] != result_y):
+	# 			# Each time the assembly misclassifies an example, increase or 
+	# 			# decrease the weights of the individual classifiers according to 
+	# 			# the relation between the assembly hypothesis and the 
+	# 			# training example's true class 
+	# 			for k in range(len(self.classifiers_weights)):
+	# 				# note: i am a little unsure about the weight-updating formula...
+	# 				#delta_weight = self.weight_learning_rate * abs(classifier_results[k] - result_y)
+	# 				delta_weight = self.weight_learning_rate * (self.train_y[i] - classifier_results[k])
+	# 				self.classifiers_weights[k] += delta_weight
 
 	def __update_distribution(self, prob_list, mistakes):
 		"""
