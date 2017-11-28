@@ -1,7 +1,7 @@
 #
 # perceptron.py
 # 
-# date last modified: 26 nov 2017
+# date last modified: 28 nov 2017
 # modified last by: jerry
 # 
 # implementation of the linear classifier, perceptron
@@ -12,7 +12,7 @@ from optparse import OptionParser
 
 class PerceptronClassifier:
 
-	def __init__(self, eta, threshold, upper_bound, verbose = False,equal_weight_value = 0):
+	def __init__(self, eta, threshold, upper_bound, verbose = False,equal_weight_value = None):
 		"""
 		constructor 
 		"""
@@ -27,42 +27,6 @@ class PerceptronClassifier:
 		self.training_error_rate = 0
 		self.training_labels = []
 		self.normal_train_data = []
-
-	def __normalize(self, data_set):
-		"""
-		normalize the dataset with values [0,1]
-		"""
-		try:
-			normal = []
-			min_tuple = data_set[0][:]
-			max_tuple = data_set[0][:]
-			# find the min and max tuple
-			for example in data_set:
-				for i in range(len(example)):
-					if example[i] < min_tuple[i]:
-						# print("i ex min", i, example[i], min_tuple[i])
-						min_tuple[i] = example[i]
-					if example[i] > max_tuple[i]:
-						max_tuple[i] = example[i]
-
-			for example in data_set:
-				tmp = []
-				#print(example)
-				for i in range(len(example)):
-					#print(i)
-					if max_tuple[i] != min_tuple[i]:
-						tmp.append((example[i] - min_tuple[i])/ (max_tuple[i] - min_tuple[i]))
-					else:
-						tmp.append(max_tuple[i])
-				#tmp.append(example[-1])
-				normal.append(tmp)  # append the modified tuple to normalized array
-		except ZeroDivisionError:
-			print(i)
-			print(max_tuple)
-			print(min_tuple)
-
-		return normal
-
 
 	def __calculate_evidence(self, weights, example):
 		"""
@@ -101,7 +65,7 @@ class PerceptronClassifier:
 		"""
 
 		# first normalize the attribute vectors 
-		self.normal_train_data = self.__normalize(attribute_vectors)
+		self.normal_train_data = normalize(attribute_vectors)
 		self.training_labels = training_labels[:]
 
 		# keep track of the best linear equation, in case threshold is 
@@ -125,25 +89,22 @@ class PerceptronClassifier:
 
 		# equation has form: w0 + w1 * x1 + ... + wn * xn = 0 
 		# STEP 1: initialize the weights for all wi, to small random numbers
+		# +1 to put the w0 weight at the end of the equation (list) 
+		# usually its the first weight but to make our implementation
+		# easier, we put it at the end
 		for i in range(len(self.normal_train_data[0]) + 1):
-			if self.equal_weight_value == 0:
+			if self.equal_weight_value is None:
 				self.weights.append(random()/10)  # i'th weight
 			else:
 				self.weights.append(self.equal_weight_value)
 
-		# now put the w0 weight at the end of the equation (list) 
-		# usually its the first weight but to make our implementation
-		# easier, we put it at the end
-		#self.weights.append(random()/3)
-
-
 		epoch = 1
-		error_rate = 100
+		error_rate = 1
 		# STEP 2: for each training example... 
 		while True:
 			# calculate the evidence
 			for k in range(len(self.normal_train_data)):
-				example = self.normal_train_data[k][:]
+				example = self.normal_train_data[k]
 				# (i) determine the hypothesis, h
 				hypothesis = 1 if self.__calculate_evidence(self.weights, example) > 0 else 0
 				# (ii) update each weight according to the formula
@@ -188,15 +149,36 @@ class PerceptronClassifier:
 		:return: list of hypotheses for each example in the testing set
 		"""
 		result_list = []
-		testing_set_norm = self.__normalize(testing_set)
-		#print(testing_set_norm)
+		testing_set_norm = normalize(testing_set)
 
-		for k in range(len(testing_set_norm)):
-			example = testing_set_norm[k][:]
-			#print("normalized: " + str(example))
+		for example in testing_set_norm: 
 			# determine the hypothesis, h
 			hypothesis = 1 if self.__calculate_evidence(self.weights, example) > 0 else 0
-			result_list.append(int(hypothesis))
+			result_list.append(hypothesis)
 		return result_list
- 
 
+def normalize(dataset):
+	"""
+	normalize the dataset with values [0,1]
+	"""
+	normal = []
+	max_tuple = dataset[0][:]
+	min_tuple = dataset[0][:]
+	# find the min and max tuple
+	for example in dataset:
+		for i in range(len(example)):
+			if example[i] < min_tuple[i]:
+				min_tuple[i] = example[i]
+			if example[i] > max_tuple[i]:
+				max_tuple[i] = example[i]
+
+	for example in dataset:
+		tmp = []
+		for i in range(len(example)):
+			if max_tuple[i] != min_tuple[i]:
+				tmp.append((example[i] - min_tuple[i])/ (max_tuple[i] - min_tuple[i]))
+			else:
+				tmp.append(1) # max and min are equal therefore should be 1 
+		normal.append(tmp)  # append the modified tuple to normalized array
+
+	return normal

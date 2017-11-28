@@ -1,8 +1,8 @@
 #
 # adaboost.py
 #
-# date last modified: 27 nov 2017
-# modified last by: guru
+# date last modified: 28 nov 2017
+# modified last by: jerry
 #
 #
 
@@ -18,7 +18,7 @@ PERCEPTRON_IS_VERBOSE = False
 class AdaBoost:
 
 	def __init__(self, num_classifiers, train_num, threshold, eta, upper_bound, eta_weights, 
-		verbose, use_scikit_learn=False):
+		verbose):
 		"""
 		num_of_classifiers: number of base-learners 
 		train_num: number of examples to be in each training subset
@@ -36,7 +36,6 @@ class AdaBoost:
 		self.upper_bound = upper_bound
 		self.weight_learning_rate = eta_weights #0.001
 		self.verbose = verbose
-		self.scikit_learn = use_scikit_learn
 
 	def fit(self, train_x, train_y):
 		self.train_x = train_x[:]
@@ -44,9 +43,8 @@ class AdaBoost:
 		self.classifiers_list = []
 		# give all classifiers an initial weight of 1 / num_of_classifiers
 		self.classifiers_weights = [(1.0 / self.num_of_classifiers)] * self.num_of_classifiers
-		if self.scikit_learn == False:
-			self.__our_perceptron()
-			self.__calculate_adaboost_weights()
+		self.__our_perceptron()
+		self.__calculate_adaboost_weights()
 
 	def predict(self, testing_set):
 		hypothesis_list = []
@@ -97,7 +95,7 @@ class AdaBoost:
 			mistakes = self.xor_tuples(self.train_y, hypothesis_list)
 
 			# get error rate for Ci
-			training_error = self.classifier_error_rate(mistakes)
+			training_error = classifier_error_rate(mistakes)
 			linear_classifier.training_error_rate = training_error
 			# add this Ci to the list of classifiers 
 			self.classifiers_list.append(linear_classifier)
@@ -151,7 +149,7 @@ class AdaBoost:
 
 		#index_list = self.__wheel_of_fortune(prob_list)
 		for i in index_list:
-			T_i_x.append(self.train_x[i][:])
+			T_i_x.append(self.train_x[i])
 			T_i_y.append(self.train_y[i])
 
 		return (T_i_x, T_i_y)
@@ -168,8 +166,8 @@ class AdaBoost:
 		result_list = [] # which class does the whole ensemble think this example belongs to?
 
 		# get a hypothesis list for each classifier
-		for i in range(len(self.classifiers_list)):
-			hypothesis = self.classifiers_list[i].predict(example_list) # a list of hypotheses for Ci
+		for classifier in self.classifiers_list:
+			hypothesis = classifier.predict(example_list) # a list of hypotheses for Ci
 			hypothesis_list.append(hypothesis) # a master list of all hypotheses for C1, ..., Cn
 
 		# iterate through every example in the example_list
@@ -235,14 +233,20 @@ class AdaBoost:
 		"""
 
 		hypothesis_list, classifier_results = self.__get_evidence_for_assembly(self.train_x)
-
-		for i in range(len(self.train_x)):
-			if self.train_y[i] != classifier_results[i]:
-				for k in range(len(self.classifiers_weights)):
-					# note: i am a little unsure about the weight-updating formula...
-					#delta_weight = self.weight_learning_rate * abs(classifier_results[k] - result_y)
-					delta_weight = self.weight_learning_rate * (self.train_y[i] - hypothesis_list[k][i])
-					self.classifiers_weights[k] += delta_weight				
+		error_rate = 1 
+		upper_bound = 50 
+		iteration = 0 
+		#for x in range(20):
+		while error_rate > 0.05 and iteration < upper_bound: 
+			iteration += 1
+			error_rate = 0.0
+			for i in range(len(self.train_x)):
+				if self.train_y[i] != classifier_results[i]:
+					error_rate += 1.0 / len(self.train_x)
+					for k in range(len(self.classifiers_weights)):
+						delta_weight = self.weight_learning_rate * (self.train_y[i] - hypothesis_list[k][i])
+						self.classifiers_weights[k] += delta_weight		
+			#print("on iter {} with error {}".format(iteration, error_rate))  		
 
 	# def __calculate_adaboost_weights(self):
 	# 	"""
@@ -282,9 +286,6 @@ class AdaBoost:
 		beta_i = epsilon_i / (1 - epsilon_i)
 
 		# STEP 4 modify probabilities of correctly classified examples 
-		# it is possible that beta_i can be 0...
-		if beta_i == 0:
-			beta_i += 0.01
 		# using p_i+1(ex) = p_i(ex) * beta_i 
 		for j in range(len(self.train_x)):
 			# do all probabilities get modified by beta_i?? 
@@ -293,6 +294,13 @@ class AdaBoost:
 
 		# STEP 5 normalize all probabilities
 		normal_total = sum(prob_list)
+
+		# if it so happened that there was no mistakes, then just reset 
+		# the probability distribution 
+		if normal_total == 0: 
+			prob_list = [1.0 / len(self.train_x)] * len(self.train_x)
+			return prob_list
+
 		for j in range(len(self.train_x)):
 			prob_list[j] /= normal_total
 
@@ -307,9 +315,9 @@ class AdaBoost:
 				xor_val.append(1)
 		return xor_val
 
-	def classifier_error_rate(self, mistakes):
-		error_count = 0
-		for val in mistakes:
-			error_count = error_count + 1 if val == 1 else error_count
+def classifier_error_rate(mistakes):
+	error_count = 0
+	for val in mistakes:
+		error_count = error_count + 1 if val == 1 else error_count
 
-		return error_count / len(mistakes)
+	return error_count / len(mistakes)

@@ -1,8 +1,8 @@
 #
 # adaboost_test.py
 # 
-# date last modified: 27 nov 2017
-# modified last by: guru
+# date last modified: 28 nov 2017
+# modified last by: jerry
 # 
 #
 
@@ -18,15 +18,19 @@ from perceptron import PerceptronClassifier
 from sklearn.linear_model import perceptron
 from sklearn.ensemble import AdaBoostClassifier
 from adaboost import AdaBoost
+from adaboost import classifier_error_rate
 
 # once again, change this to switch datasets; 
 # don't forget to toggle load_dataset() as well 
 
 #FILENAME = "dataset/default.csv" 
-#FILENAME = "dataset/ionosphere.dat" 
-FILENAME = "dataset/musk.dat"  
+FILENAME = "dataset/ionosphere.dat" 
+#FILENAME = "dataset/musk.dat"  
+#FILENAME = "dataset/heart.dat"  
 #FILENAME = "dataset/spambase.dat" 
 #FILENAME = "dataset/animals.dat" 
+#FILENAME = "dataset/ecoli.dat"
+#FILENAME = "dataset/fertility.dat"
 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.65
@@ -123,6 +127,23 @@ def load_dataset_musk(filename):
 
 	return dataset 
 
+def load_dataset_ecoli(filename):
+	"""
+	given a filename that points to a file containing the data-set, 
+	load it into memory and return an array containing this data-set
+	"""
+	dataset = []
+	# open the data-set file
+	file = open(filename, "r")
+	# we want to load this data-set into a 2D array 
+	# where each row is an example and each column is 
+	# an attribute. 
+	for line in file: 
+		example = line.strip().split("  ") # a row in the data-set 
+		dataset.append(list(map(float, example[1:]))) # append it to the 2D array
+
+	return dataset 
+
 def load_dataset_heart(filename):
 	"""
 	given a filename that points to a file containing the data-set, 
@@ -150,8 +171,8 @@ def split_attribute_and_label(dataset):
 	"""
 
 	# add 0.1 because values are processed as floats and we may have 0.999...
-	class_labels = [int(row[-1] + 0.1) for row in dataset]
-	attributes = [row[0:-1] for row in dataset]
+	class_labels = [round(row[-1]) for row in dataset]
+	attributes = [row[:-1] for row in dataset]
 	return (attributes, class_labels)
 
 def calculate_error(class_labels, hypothesis_list):
@@ -188,8 +209,9 @@ def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
 	# the class-label. also note that this is the way scikit-learn does it. 
 	# train_x: the attribute vector; train_y: the class_label  
 	(train_x, train_y) = split_attribute_and_label(training_set)
-	(test_x, test_y) = split_attribute_and_label(testing_set)	
-	train_subset_num = int(len(train_y) * 0.5) #int(len(train_y)*10/NUM_OF_CLASSIFIERS)
+	(test_x, test_y) = split_attribute_and_label(testing_set)
+	print(len(train_x))	
+	train_subset_num = int(len(train_y) * 0.2) 
 
 	for cl in range(1, max_classes+1, 2):
 		train_error = []
@@ -202,11 +224,11 @@ def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
 
 			hypothesis_list = ada_obj.predict(train_x)
 			mistakes = ada_obj.xor_tuples(train_y, hypothesis_list)
-			error_rate_train = ada_obj.classifier_error_rate(mistakes)
+			error_rate_train = classifier_error_rate(mistakes)
 
 			hypothesis_list = ada_obj.predict(test_x)
 			mistakes = ada_obj.xor_tuples(test_y, hypothesis_list)
-			error_rate_test = ada_obj.classifier_error_rate(mistakes)
+			error_rate_test = classifier_error_rate(mistakes)
 			train_error.append(error_rate_train)
 			testing_error.append(error_rate_test)
 
@@ -229,9 +251,6 @@ def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
 		print("Testing avg for %s   %s"%(cl, errors.test_error))
 		testing_error_list.append((sum(testing_error)/len(testing_error)) * 100)
 		print("Scikit adaboost avg for %s   %s"%(cl, errors.scikit_error))
-		del train_error[:]
-		del testing_error[:]
-		del scikit_error[:]
 
 	#return testing_error_list
 	return all_error_list
@@ -260,11 +279,36 @@ def plot_errors(error_list):
 	plt.title('Adaboost Error Rates on the {0} Dataset'.format(title))
 	plt.savefig('{0}.png'.format(title))
 
+def plot_adaboost_vs_tree(error_list):
+	num_classifiers_list = []
+	train_error_list = []
+	test_error_list = []
+	scikit_error_list = []
+
+	tmp = FILENAME.split('/')
+	title = tmp[1].split('.')[0].title()
+	
+	for error in error_list:
+		num_classifiers_list.append(error.num_classifiers)
+		train_error_list.append(error.train_error)
+		test_error_list.append(error.test_error)
+		scikit_error_list.append(error.scikit_error)
+
+	plt.plot(num_classifiers_list, train_error_list, 'r-')
+	plt.plot(num_classifiers_list, test_error_list, 'g-')
+	plt.plot(num_classifiers_list, scikit_error_list, 'b-')
+	plt.legend(['Training Set Error', 'Testing Set Error', 'Scikit Error'], loc = 'upper left')
+	plt.xlabel('Number of Classifiers')
+	plt.ylabel('Error Rate')
+	plt.title('Adaboost Error Rates on the {0} Dataset'.format(title))
+	plt.savefig('{0}.png'.format(title))
+
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
-#dataset =load_dataset_ionosphere(FILENAME)
-dataset =load_dataset_musk(FILENAME)
+dataset =load_dataset_ionosphere(FILENAME)
+#dataset =load_dataset_musk(FILENAME)
 #dataset =load_dataset_heart(FILENAME)
+#dataset =load_dataset_ecoli(FILENAME)
 
 (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
@@ -279,17 +323,18 @@ if IS_VERBOSE:
 (train_x, train_y) = split_attribute_and_label(training_set)
 (test_x, test_y) = split_attribute_and_label(testing_set)
 
+
 # # create the perceptron classifier 
-# linear_classifier = PerceptronClassifier(ETA, THRESHOLD, UPPER_BOUND, True)
+#linear_classifier = PerceptronClassifier(ETA, THRESHOLD, UPPER_BOUND, False)
 # # train the classifier 
-# linear_classifier.fit(train_x, train_y)
-# print("Training error rate %s" % linear_classifier.training_error_rate)
+#linear_classifier.fit(train_x, train_y)
+#print("Training error rate %s" % linear_classifier.training_error_rate)
 # #print(linear_classifier.weights)
 
 # # test the trained classifier on the testing set 
-# result_list = linear_classifier.predict(test_x)
+#result_list = linear_classifier.predict(test_x)
 # print("=========")
-# print("our perceptron error rate on test: %s" % calculate_error(test_y, result_list))
+#print("our perceptron error rate on test: %s" % calculate_error(test_y, result_list))
 # print("=========")
 
 # test their perceptron and adaboost for comparison 
@@ -356,6 +401,5 @@ print("=========")
 # #average_error_rate = average_for_runs(10, train_subset_num, 10)
 # #print("average error rate : %f" % average_error_rate) 
 
-#lis = adaboost_avg_run(20, 5, dataset)
-error_list = adaboost_avg_run(20, 1, dataset)
+error_list = adaboost_avg_run(40, 5, dataset)
 plot_errors(error_list)
