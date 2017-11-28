@@ -24,8 +24,8 @@ from adaboost import classifier_error_rate
 # don't forget to toggle load_dataset() as well 
 
 #FILENAME = "dataset/default.csv" 
-FILENAME = "dataset/ionosphere.dat" 
-#FILENAME = "dataset/musk.dat"  
+#FILENAME = "dataset/ionosphere.dat" 
+FILENAME = "dataset/musk.dat"  
 #FILENAME = "dataset/heart.dat"  
 #FILENAME = "dataset/spambase.dat" 
 #FILENAME = "dataset/animals.dat" 
@@ -199,21 +199,51 @@ class ErrorWrapper:
 		return "# of Classifiers {0}, Train Error: {1}, Test Error: {2}, Scikit Error: {3}".format(
 			self.num_classifiers, self.train_error, self.test_error, self.scikit_error)
 
-def adaboost_avg_run(max_classes, avg_num_of_run, dataset):
+def perceptron_avg_run(avg_num_of_run, training_set, testing_set):
+	(train_x, train_y) = split_attribute_and_label(training_set)
+	(test_x, test_y) = split_attribute_and_label(testing_set)
+
+	perceptron_error = []
+	
+	for i in range(avg_num_of_run):
+
+		p = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
+								fit_intercept=True, eta0=ETA)
+		p.fit(train_x, train_y)
+		result_list = p.predict(test_x)
+		perceptron_error.append(calculate_error(test_y, result_list))
+
+	return sum(perceptron_error) / len(perceptron_error)
+
+
+def decision_tree_avg_run(avg_num_of_run, training_set, testing_set):
+	(train_x, train_y) = split_attribute_and_label(training_set)
+	(test_x, test_y) = split_attribute_and_label(testing_set)
+
+	# run decision tree classifier avg_num_of_run times
+	decision_tree_error = []
+	for i in range(avg_num_of_run):
+		clf = tree.DecisionTreeClassifier()
+		clf = clf.fit(train_x, train_y)
+		decision_tree_result_list = clf.predict(test_x)
+		decision_tree_error.append(calculate_error(test_y, decision_tree_result_list))
+
+	return sum(decision_tree_error) / len(decision_tree_error)
+
+def adaboost_avg_run(max_classes, avg_num_of_run, training_set, testing_set):
 	testing_error_list = []
 	all_error_list = []
 
-	(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 	# because datasets sometimes place the class attribute at the end or even 
 	# at the beginning or the middle, we'll separate the attribute vector from
 	# the class-label. also note that this is the way scikit-learn does it. 
 	# train_x: the attribute vector; train_y: the class_label  
 	(train_x, train_y) = split_attribute_and_label(training_set)
 	(test_x, test_y) = split_attribute_and_label(testing_set)
-	print(len(train_x))	
+	# print(len(train_x))	
 	train_subset_num = int(len(train_y) * 0.2) 
 
-	for cl in range(1, max_classes+1, 2):
+	for cl in range(1, max_classes+1, 3):
 		train_error = []
 		testing_error = []
 		scikit_error = []
@@ -278,35 +308,34 @@ def plot_errors(error_list):
 	plt.ylabel('Error Rate')
 	plt.title('Adaboost Error Rates on the {0} Dataset'.format(title))
 	plt.savefig('{0}.png'.format(title))
+	plt.gcf().clear()
 
-def plot_adaboost_vs_tree(error_list):
+def plot_testing_set_errors(error_list, decision_tree_avg_error, perceptron_avg_error):
 	num_classifiers_list = []
-	train_error_list = []
 	test_error_list = []
-	scikit_error_list = []
 
 	tmp = FILENAME.split('/')
 	title = tmp[1].split('.')[0].title()
 	
 	for error in error_list:
 		num_classifiers_list.append(error.num_classifiers)
-		train_error_list.append(error.train_error)
 		test_error_list.append(error.test_error)
-		scikit_error_list.append(error.scikit_error)
 
-	plt.plot(num_classifiers_list, train_error_list, 'r-')
-	plt.plot(num_classifiers_list, test_error_list, 'g-')
-	plt.plot(num_classifiers_list, scikit_error_list, 'b-')
-	plt.legend(['Training Set Error', 'Testing Set Error', 'Scikit Error'], loc = 'upper left')
+	plt.plot(num_classifiers_list, test_error_list, 'r-')
+	plt.axhline(y=decision_tree_avg_error, color='g')
+	plt.axhline(y=perceptron_avg_error, color='b')
+
+	plt.legend(['Testing Set Error', 'Average Error using a Decision Tree', 'Average Error using a Single Perceptron Classifier'], loc = 'upper right')
 	plt.xlabel('Number of Classifiers')
 	plt.ylabel('Error Rate')
-	plt.title('Adaboost Error Rates on the {0} Dataset'.format(title))
-	plt.savefig('{0}.png'.format(title))
+	plt.title('Error Rates with Different Classifiers on the {0} Dataset'.format(title))
+	plt.savefig('{0}_different_classifiers.png'.format(title))
+	plt.gcf().clear()
 
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
-dataset =load_dataset_ionosphere(FILENAME)
-#dataset =load_dataset_musk(FILENAME)
+#dataset =load_dataset_ionosphere(FILENAME)
+dataset =load_dataset_musk(FILENAME)
 #dataset =load_dataset_heart(FILENAME)
 #dataset =load_dataset_ecoli(FILENAME)
 
@@ -356,9 +385,9 @@ print("their adaboost error on test: %s" % calculate_error(test_y, result_list))
 # test a decision tree 
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(train_x, train_y)
-result_list = clf.predict(test_x)
+decision_tree_result_list = clf.predict(test_x)
 print("=========")
-print("single tree error rate on testing set: %s" % calculate_error(test_y, result_list))
+print("single tree error rate on testing set: %s" % calculate_error(test_y, decision_tree_result_list))
 print("=========")
 
 # # Create the perceptron object (net)
@@ -401,5 +430,11 @@ print("=========")
 # #average_error_rate = average_for_runs(10, train_subset_num, 10)
 # #print("average error rate : %f" % average_error_rate) 
 
-error_list = adaboost_avg_run(40, 5, dataset)
+# split dataset only once
+(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
+# error_list = adaboost_avg_run(40, 5, training_set, testing_set)
+error_list = adaboost_avg_run(25, 5, training_set, testing_set)
+decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
+perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
 plot_errors(error_list)
+plot_testing_set_errors(error_list, decision_tree_avg_error, perceptron_avg_error)
