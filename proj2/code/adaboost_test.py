@@ -391,11 +391,11 @@ def run_all(num_times = 1):
 
 			try:
 				error_list = adaboost_avg_run(50, 5, training_set, testing_set)
+				decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
+				perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
 			except:
 				continue
 			
-			decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
-			perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
 			plot_errors(filename, i, error_list)
 			plot_testing_set_errors(filename, i, error_list, decision_tree_avg_error, perceptron_avg_error)
 
