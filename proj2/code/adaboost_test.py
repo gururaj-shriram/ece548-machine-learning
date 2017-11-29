@@ -31,6 +31,17 @@ from adaboost import classifier_error_rate
 #FILENAME = "dataset/animals.dat" 
 FILENAME = "dataset/ecoli.dat"
 #FILENAME = "dataset/fertility.dat"
+#FILENAME = "dataset/magic04.dat"
+
+FILENAME_LIST = [
+	"dataset/ionosphere.dat", 
+	"dataset/musk.dat", 
+	"dataset/heart.dat", 
+	"dataset/spambase.dat", 
+	"dataset/animals.dat", 
+	"dataset/ecoli.dat", 
+	"dataset/fertility.dat", 
+	"dataset/magic04.dat"]
 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.65
@@ -165,6 +176,44 @@ def load_dataset_heart(filename):
 
 	return dataset 
 
+def load_dataset_magic(filename):
+	"""
+	given a filename that points to a file containing the data-set, 
+	load it into memory and return an array containing this data-set
+	"""
+	dataset = []
+	# open the data-set file
+	file = open(filename, "r")
+	# we want to load this data-set into a 2D array 
+	# where each row is an example and each column is 
+	# an attribute. 
+	for line in file: 
+		example = line.strip().split(",") # a row in the data-set 
+		if example[-1] == 'g':
+			example[-1] = 1
+		else:
+			example[-1] = 0
+		dataset.append(list(map(float, example[:]))) # append it to the 2D array
+
+	return dataset 
+
+def load_any_dataset(filename):
+	tmp = filename.split('/')
+	title = tmp[1].split('.')[0].lower()
+
+	if title == "ionosphere":
+		return load_dataset_ionosphere(filename)
+	elif title == "musk":
+		return load_dataset_musk(filename)
+	elif title == "heart":
+		return load_dataset_heart(filename)
+	elif title == "ecoli":
+		return load_dataset_ecoli(filename)
+	elif title == "magic04":
+		return load_dataset_magic(filename)
+	else:
+		return load_dataset(filename)
+
 def split_attribute_and_label(dataset):
 	"""
 	split attribute vectors from their class-labels 
@@ -285,14 +334,15 @@ def adaboost_avg_run(max_classes, avg_num_of_run, training_set, testing_set):
 	#return testing_error_list
 	return all_error_list
 
-def plot_errors(error_list):
+def plot_errors(filename, count, error_list):
 	num_classifiers_list = []
 	train_error_list = []
 	test_error_list = []
 	scikit_error_list = []
 
-	tmp = FILENAME.split('/')
+	tmp = filename.split('/')
 	title = tmp[1].split('.')[0].title()
+	new_filename = 'graphs/' + title + '_' + str(count)
 	
 	for error in error_list:
 		num_classifiers_list.append(error.num_classifiers)
@@ -307,15 +357,16 @@ def plot_errors(error_list):
 	plt.xlabel('Number of Classifiers')
 	plt.ylabel('Error Rate')
 	plt.title('Adaboost Error Rates on the {0} Dataset'.format(title))
-	plt.savefig('{0}.png'.format(title))
+	plt.savefig('{0}.png'.format(new_filename))
 	plt.gcf().clear()
 
-def plot_testing_set_errors(error_list, decision_tree_avg_error, perceptron_avg_error):
+def plot_testing_set_errors(filename, count, error_list, decision_tree_avg_error, perceptron_avg_error):
 	num_classifiers_list = []
 	test_error_list = []
 
-	tmp = FILENAME.split('/')
+	tmp = filename.split('/')
 	title = tmp[1].split('.')[0].title()
+	new_filename = 'graphs/' + title 
 	
 	for error in error_list:
 		num_classifiers_list.append(error.num_classifiers)
@@ -329,8 +380,24 @@ def plot_testing_set_errors(error_list, decision_tree_avg_error, perceptron_avg_
 	plt.xlabel('Number of Classifiers')
 	plt.ylabel('Error Rate')
 	plt.title('Error Rates with Different Classifiers on the {0} Dataset'.format(title))
-	plt.savefig('{0}_different_classifiers.png'.format(title))
+	plt.savefig('{0}_different_classifiers_{1}.png'.format(title, str(count)))
 	plt.gcf().clear()
+
+def run_all(num_times = 1):
+	for i in range(num_times):
+		for filename in FILENAME_LIST:
+			dataset = load_any_dataset(filename)
+			(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
+
+			try:
+				error_list = adaboost_avg_run(50, 5, training_set, testing_set)
+			except:
+				continue
+			
+			decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
+			perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
+			plot_errors(filename, i, error_list)
+			plot_testing_set_errors(filename, i, error_list, decision_tree_avg_error, perceptron_avg_error)
 
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
@@ -338,6 +405,7 @@ def plot_testing_set_errors(error_list, decision_tree_avg_error, perceptron_avg_
 #dataset =load_dataset_musk(FILENAME)
 #dataset =load_dataset_heart(FILENAME)
 dataset =load_dataset_ecoli(FILENAME)
+#dataset = load_dataset_magic(FILENAME)
 
 (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
@@ -431,10 +499,13 @@ print("=========")
 # #print("average error rate : %f" % average_error_rate) 
 
 # split dataset only once
-(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
-# error_list = adaboost_avg_run(40, 5, training_set, testing_set)
-error_list = adaboost_avg_run(40, 5, training_set, testing_set)
-decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
-perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
-plot_errors(error_list)
-plot_testing_set_errors(error_list, decision_tree_avg_error, perceptron_avg_error)
+# (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
+# error_list = adaboost_avg_run(50, 5, training_set, testing_set)
+# #error_list = adaboost_avg_run(20, 1, training_set, testing_set)
+# decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
+# perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
+# plot_errors(FILENAME, error_list)
+# plot_testing_set_errors(FILENAME, error_list, decision_tree_avg_error, perceptron_avg_error)
+
+#run_all()
+run_all(3)
