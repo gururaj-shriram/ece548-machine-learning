@@ -46,6 +46,19 @@ class AdaBoost:
 		self.__our_perceptron()
 		self.__calculate_adaboost_weights()
 
+	def fit_with_errors(self, train_x, train_y, test_x, test_y):
+		self.train_x = train_x[:]
+		self.train_y = train_y
+		self.test_x = test_x[:]
+		self.test_y = test_y
+		self.classifiers_list = []
+		self.training_error = {}
+		self.testing_error = {}
+		# give all classifiers an initial weight of 1 / num_of_classifiers
+		self.classifiers_weights = [(1.0 / self.num_of_classifiers)] * self.num_of_classifiers
+		self.__our_perceptron_with_error()
+		self.__calculate_adaboost_weights()
+
 	def predict(self, testing_set):
 		hypothesis_list = []
 		(classifier_results, result_list) = self.__get_evidence_for_assembly(testing_set)
@@ -106,6 +119,71 @@ class AdaBoost:
 
 			# update probablity for the next i+1 classifier
 			prob_list = self.__update_distribution(prob_list, mistakes)
+
+	def __our_perceptron_with_error(self):
+
+		# Table 9.3 Adaboost algorithm 
+		# Let m be the number of examples in training_set and let i = 1  
+		# 1. For each ex in training_set, set p1(ex) = 1 / m 
+		# 2. Create subset Ti consisting of train_num examples randomly selected 
+		#    according to the given probabilities. From this Ti, induce Ci. 
+		#    note: the book says m examples?
+		#    
+		# 3. Evaluate Ci on each ex in training_set 
+		#    Let e_i(ex) = 1 if Ci misclassified; else, 0 
+		#    (i)  Calculate epsilon_i = SUM(j=1, m) pi(ex_j) * ei(ex_j) 
+		#    (ii) Calculate beta_i = epsilon_i / (1 - epsilon_i) 
+		# 4. Modify probabilities of correctly classified examples 
+		#    by p_i+1(ex) = p_i(ex) * beta_i 
+		# 5. Normalize the probabilities such that all SUM(j=1, m) p_i+1(ex_j) = 1
+		# 6. termination: Do until we have reached num_classifiers 
+		#    note: or, should we go until a desired error rate is met?     
+
+		# STEP 1: every example has this initial probability p1 = 1 / m  
+		prob_list = [1.0 / len(self.train_x)] * len(self.train_x)
+
+		for i in range(self.num_of_classifiers):
+			# STEP 2: create the i-th training subset 
+			(T_i_x, T_i_y) = self.__training_set_Ti_with_probablity(prob_list)
+			# induce the i-th classifier Ci from this training subset
+			linear_classifier = PerceptronClassifier(
+				self.eta, self.threshold, self.upper_bound, PERCEPTRON_IS_VERBOSE) 
+			linear_classifier.fit(T_i_x, T_i_y)
+
+			# STEP 3: evaluate Ci on each example in the training set 
+			hypothesis_list = linear_classifier.predict(self.train_x)
+
+			# Let e_i(ex) = 1 if Ci misclassified; else, 0 
+			# this step will give the error vector for the training set,
+			# where 1 = incorrect classification and 0 = correct classification
+			mistakes = self.xor_tuples(self.train_y, hypothesis_list)
+
+			# get error rate for Ci
+			training_error = classifier_error_rate(mistakes)
+			linear_classifier.training_error_rate = training_error
+			# add this Ci to the list of classifiers 
+			self.classifiers_list.append(linear_classifier)
+
+			if self.verbose:
+				print("C%d has training error rate : %f" %
+					  (i + 1, training_error))
+
+			# update probablity for the next i+1 classifier
+			prob_list = self.__update_distribution(prob_list, mistakes)
+
+			# calculate training error on existing ensemble
+			hypothesis_list = self.predict(self.train_x)
+			mistakes = self.xor_tuples(self.train_y, hypothesis_list)
+			error_rate_train = classifier_error_rate(mistakes)
+
+			# calculate testing error on existing ensemble
+			hypothesis_list = self.predict(self.test_x)
+			mistakes = self.xor_tuples(self.test_y, hypothesis_list)
+			error_rate_test = classifier_error_rate(mistakes)
+
+			# store it in a list with 0-based indexing
+			self.training_error[i] = error_rate_train
+			self.testing_error[i] = error_rate_test
 
 	def __wheel_of_fortune(self, prob_list):
 		train_subset = set()
@@ -243,7 +321,8 @@ class AdaBoost:
 			for i in range(len(self.train_x)):
 				if self.train_y[i] != classifier_results[i]:
 					error_rate += 1.0 / len(self.train_x)
-					for k in range(len(self.classifiers_weights)):
+					#for k in range(len(self.classifiers_weights)):
+					for k in range(len(self.classifiers_list)):
 						delta_weight = self.weight_learning_rate * (self.train_y[i] - hypothesis_list[k][i])
 						self.classifiers_weights[k] += delta_weight		
 			#print("on iter {} with error {}".format(iteration, error_rate))  		
@@ -321,3 +400,5 @@ def classifier_error_rate(mistakes):
 		error_count = error_count + 1 if val == 1 else error_count
 
 	return error_count / len(mistakes)
+
+

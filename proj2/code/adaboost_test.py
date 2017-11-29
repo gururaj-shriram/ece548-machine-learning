@@ -39,7 +39,7 @@ FILENAME_LIST = [
 	"dataset/heart.dat", 
 	"dataset/spambase.dat", 
 	"dataset/animals.dat", 
-	"dataset/ecoli.dat", 
+	"dataset/ecoli.dat"]
 	"dataset/fertility.dat", 
 	"dataset/magic04.dat"]
 
@@ -48,7 +48,7 @@ PROBABILITY_TRAINING_SET = 0.65
 
 # learning rate for perceptron 
 ETA = 0.05
-# learning rate for perceptron when adjusting weights of classifiers 
+# learning rate for adaboost when adjusting weights of classifiers 
 ETA_WEIGHTS = 0.0001
 # desired threshold for error rate; 0.2 --> 20% 
 THRESHOLD = 0.05
@@ -264,7 +264,6 @@ def perceptron_avg_run(avg_num_of_run, training_set, testing_set):
 
 	return sum(perceptron_error) / len(perceptron_error)
 
-
 def decision_tree_avg_run(avg_num_of_run, training_set, testing_set):
 	(train_x, train_y) = split_attribute_and_label(training_set)
 	(test_x, test_y) = split_attribute_and_label(testing_set)
@@ -334,6 +333,59 @@ def adaboost_avg_run(max_classes, avg_num_of_run, training_set, testing_set):
 	#return testing_error_list
 	return all_error_list
 
+def adaboost_avg_run_new(max_classes, avg_num_of_run, training_set, testing_set):
+	all_error_list = []
+
+	# because datasets sometimes place the class attribute at the end or even 
+	# at the beginning or the middle, we'll separate the attribute vector from
+	# the class-label. also note that this is the way scikit-learn does it. 
+	# train_x: the attribute vector; train_y: the class_label  
+	(train_x, train_y) = split_attribute_and_label(training_set)
+	(test_x, test_y) = split_attribute_and_label(testing_set)
+	# print(len(train_x))	
+	train_subset_num = int(len(train_y) * 0.2) 
+
+	our_ada_training_errors = {}
+	our_ada_testing_errors = {}
+
+	# init dict of num classifier to error list
+	for i in range(1, max_classes+1):
+		our_ada_training_errors[i] = []
+		our_ada_testing_errors[i] = []
+
+	# run ada num_runs times
+	for i in range(avg_num_of_run):
+		ada_obj = AdaBoost(max_classes, train_subset_num, THRESHOLD, ETA, UPPER_BOUND, ETA_WEIGHTS, False)
+		ada_obj.fit_with_errors(train_x, train_y, test_x, test_y)
+
+		for j in range(max_classes):
+			our_ada_training_errors[j+1].append(ada_obj.training_error[j])
+			our_ada_testing_errors[j+1].append(ada_obj.testing_error[j])
+
+	for cl in range(1, max_classes+1):
+		scikit_error = []
+		for i in range(avg_num_of_run):
+			pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
+							fit_intercept=True, eta0=ETA)
+
+			bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=cl)
+			bdt.fit(train_x, train_y)
+			result_list = bdt.predict(test_x)
+			scikit_error.append(calculate_error(test_y, result_list))
+
+		errors = ErrorWrapper(
+			cl, 
+			sum(our_ada_training_errors[cl])/len(our_ada_training_errors[cl]), 
+			sum(our_ada_testing_errors[cl])/len(our_ada_testing_errors[cl]), 
+			sum(scikit_error)/len(scikit_error))
+
+		all_error_list.append(errors)
+		print("Train avg for %s   %s"%(cl, errors.train_error))
+		print("Testing avg for %s   %s"%(cl, errors.test_error))
+		print("Scikit adaboost avg for %s   %s"%(cl, errors.scikit_error))
+
+	return all_error_list
+
 def plot_errors(filename, count, error_list):
 	num_classifiers_list = []
 	train_error_list = []
@@ -380,24 +432,30 @@ def plot_testing_set_errors(filename, count, error_list, decision_tree_avg_error
 	plt.xlabel('Number of Classifiers')
 	plt.ylabel('Error Rate')
 	plt.title('Error Rates with Different Classifiers on the {0} Dataset'.format(title))
-	plt.savefig('{0}_different_classifiers_{1}.png'.format(title, str(count)))
+	plt.savefig('{0}_different_classifiers_{1}.png'.format(new_filename, str(count)))
 	plt.gcf().clear()
 
 def run_all(num_times = 1):
 	for i in range(num_times):
-		for filename in FILENAME_LIST:
+		j = 0
+		while j < len(FILENAME_LIST):
+			filename = FILENAME_LIST[j]
 			dataset = load_any_dataset(filename)
 			(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
 			try:
-				error_list = adaboost_avg_run(50, 5, training_set, testing_set)
+				error_list = adaboost_avg_run_new(50, 5, training_set, testing_set)
 				decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
 				perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
-			except:
+			except Exception as e:
+				print(str(e))
+				j -= 1
 				continue
 			
-			plot_errors(filename, i, error_list)
-			plot_testing_set_errors(filename, i, error_list, decision_tree_avg_error, perceptron_avg_error)
+			plot_errors(filename, i+1, error_list)
+			plot_testing_set_errors(filename, i+1, error_list, decision_tree_avg_error, perceptron_avg_error)
+
+			j += 1
 
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
@@ -507,5 +565,5 @@ print("=========")
 # plot_errors(FILENAME, error_list)
 # plot_testing_set_errors(FILENAME, error_list, decision_tree_avg_error, perceptron_avg_error)
 
-#run_all()
-run_all(3)
+run_all()
+#run_all(2)
