@@ -11,6 +11,7 @@ import operator
 import numpy as np
 import matplotlib.pyplot as plt
 import re
+from matplotlib.colors import ListedColormap
 from random import randint
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import tree 
@@ -29,19 +30,23 @@ from adaboost import classifier_error_rate
 #FILENAME = "dataset/heart.dat"  
 #FILENAME = "dataset/spambase.dat" 
 #FILENAME = "dataset/animals.dat" 
-FILENAME = "dataset/ecoli.dat"
+#FILENAME = "dataset/ecoli.dat"
 #FILENAME = "dataset/fertility.dat"
 #FILENAME = "dataset/magic04.dat"
+FILENAME = "dataset/occupancy.dat"
 
 FILENAME_LIST = [
-	"dataset/ionosphere.dat", 
-	"dataset/musk.dat", 
-	"dataset/heart.dat", 
-	"dataset/spambase.dat", 
-	"dataset/animals.dat", 
+	#"dataset/kidney.dat"]
+	# "dataset/cancer.dat"]
+	#"dataset/occupancy.dat"]	
+	#"dataset/ionosphere.dat", 
+	#"dataset/musk.dat", 
+	#"dataset/heart.dat", 
+	#"dataset/spambase.dat", 
+	#"dataset/animals.dat", 
 	"dataset/ecoli.dat"]
-	"dataset/fertility.dat", 
-	"dataset/magic04.dat"]
+	#"dataset/fertility.dat",
+	#"dataset/magic04.dat"]
 
 # probability of an example being in the training set 
 PROBABILITY_TRAINING_SET = 0.65
@@ -120,6 +125,50 @@ def load_dataset_ionosphere(filename):
 		dataset.append(list(map(float, example[:]))) # append it to the 2D array
 
 	return dataset 
+
+def load_dataset_cancer(filename):
+	"""
+	given a filename that points to a file containing the data-set, 
+	load it into memory and return an array containing this data-set
+	"""
+	dataset = []
+	# open the data-set file
+	file = open(filename, "r")
+	# we want to load this data-set into a 2D array 
+	# where each row is an example and each column is 
+	# an attribute. 
+	for line in file: 
+		example = line.strip().split(",") # a row in the data-set 
+		if '?' in example:
+			continue
+		if example[-1] == '2':
+			example[-1] = 1
+		else:
+			example[-1] = 0
+		dataset.append(list(map(float, example[:]))) # append it to the 2D array
+
+	return dataset 
+
+def load_dataset_kidney(filename):
+	"""
+	given a filename that points to a file containing the data-set, 
+	load it into memory and return an array containing this data-set
+	"""
+	dataset = []
+	# open the data-set file
+	file = open(filename, "r")
+	# we want to load this data-set into a 2D array 
+	# where each row is an example and each column is 
+	# an attribute. 
+	for line in file: 
+		example = line.strip().split(",") # a row in the data-set 
+		if '?' in example:
+			continue
+
+		dataset.append(list(map(float, example[:]))) # append it to the 2D array
+
+	return dataset 
+
 
 def load_dataset_musk(filename):
 	"""
@@ -211,6 +260,10 @@ def load_any_dataset(filename):
 		return load_dataset_ecoli(filename)
 	elif title == "magic04":
 		return load_dataset_magic(filename)
+	elif title == "cancer":
+		return load_dataset_cancer(filename)
+	elif title == "kidney":
+		return load_dataset_kidney(filename)
 	else:
 		return load_dataset(filename)
 
@@ -313,7 +366,7 @@ def adaboost_avg_run(max_classes, avg_num_of_run, training_set, testing_set):
 			pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
 							fit_intercept=True, eta0=ETA)
 
-			bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=cl)
+			bdt = AdaBoostClassifier(pada,algorithm="SAMME",n_estimators=cl)
 			bdt.fit(train_x, train_y)
 			result_list = bdt.predict(test_x)
 			scikit_error.append(calculate_error(test_y, result_list))
@@ -368,7 +421,7 @@ def adaboost_avg_run_new(max_classes, avg_num_of_run, training_set, testing_set)
 			pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
 							fit_intercept=True, eta0=ETA)
 
-			bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=cl)
+			bdt = AdaBoostClassifier(pada,algorithm="SAMME",n_estimators=cl)
 			bdt.fit(train_x, train_y)
 			result_list = bdt.predict(test_x)
 			scikit_error.append(calculate_error(test_y, result_list))
@@ -405,7 +458,7 @@ def plot_errors(filename, count, error_list):
 	plt.plot(num_classifiers_list, train_error_list, 'r-')
 	plt.plot(num_classifiers_list, test_error_list, 'g-')
 	plt.plot(num_classifiers_list, scikit_error_list, 'b-')
-	plt.legend(['Training Set Error', 'Testing Set Error', 'Scikit Error'], loc = 'upper left')
+	plt.legend(['Training Set Error', 'Testing Set Error', 'Scikit Error'], loc = 'upper right')
 	plt.xlabel('Number of Classifiers')
 	plt.ylabel('Error Rate')
 	plt.title('Adaboost Error Rates on the {0} Dataset'.format(title))
@@ -435,11 +488,86 @@ def plot_testing_set_errors(filename, count, error_list, decision_tree_avg_error
 	plt.savefig('{0}_different_classifiers_{1}.png'.format(new_filename, str(count)))
 	plt.gcf().clear()
 
+def get_class_labels(dataset):
+	"""
+	calculates the number of class labels in the dataset
+	returns a dictionary from class label to a random index used for plotting
+	"""
+	class_labels = {}
+	i = 0
+	for row in dataset:
+		if row[-1] not in class_labels:
+			class_labels[row[-1]] = i
+			i += 1
+
+	return class_labels
+
+def plot_color_map(filename, training_set):
+	"""
+	Most of the code used to plot is from an example from scikit
+	http://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html
+	"""
+	tmp = filename.split('/')
+	title = tmp[1].split('.')[0].title()
+	new_filename = 'graphs/' + title 
+
+	train_X = [row[0:-1] for row in training_set]
+	train_y = [row[-1] for row in training_set]
+
+	# Convert the training tuples into np arrays to use for plotting
+	class_labels = get_class_labels(training_set)
+	temp_X = np.array(train_X).astype(np.float)
+	temp_y = []
+
+	# Convert string class labels into a number to be used by SciKit's K-NN
+	for data in train_y:
+		temp_y.append(int(data))
+
+	X = np.array(temp_X[:,:2])
+	y = np.array(temp_y)
+
+	pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
+							fit_intercept=True, eta0=ETA)
+
+	bdt = AdaBoostClassifier(pada,algorithm="SAMME",n_estimators=50)
+	bdt.fit(X, y)
+
+	num_classes = len(class_labels)
+	h = 0.02 # step size
+
+	# create a random color map for data points and classes
+	c_map_1 = plt.get_cmap("magma_r")
+	c_map_2 = ListedColormap(['#FFFFFF'])
+	# Plot the decision boundary. For that, we will assign a color to each
+	# point in the mesh [x_min, x_max]x[y_min, y_max].
+	x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+	y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+	xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+		np.arange(y_min, y_max, h))
+	
+	Z = bdt.predict(np.c_[xx.ravel(), yy.ravel()])
+
+	# Put the result into a color plot
+	Z = Z.reshape(xx.shape)
+	plt.figure()
+	plt.pcolormesh(xx, yy, Z, cmap=c_map_1)
+
+	# Plot also the training points
+	plt.scatter(X[:, 0], X[:, 1], c=y, cmap=c_map_2,
+		edgecolor='k', s=20)
+	plt.xlim(xx.min(), xx.max())
+	plt.ylim(yy.min(), yy.max())
+	plt.xlabel('Attribute 1')
+	plt.ylabel('Attribute 2')
+	plt.title("Training data in the {0} Dataset".format(title))
+	plt.savefig("{0}_colormap.png".format(new_filename))
+
 def run_all(num_times = 1):
 	for i in range(num_times):
 		j = 0
 		while j < len(FILENAME_LIST):
 			filename = FILENAME_LIST[j]
+			j += 1
 			dataset = load_any_dataset(filename)
 			(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
@@ -449,34 +577,34 @@ def run_all(num_times = 1):
 				perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
 			except Exception as e:
 				print(str(e))
-				j -= 1
+				j = 0
 				continue
 			
 			plot_errors(filename, i+1, error_list)
 			plot_testing_set_errors(filename, i+1, error_list, decision_tree_avg_error, perceptron_avg_error)
+			plot_color_map(filename, training_set)
 
-			j += 1
 
 # preprocessing: load in the dataset and split into a training and testing set 
 #dataset = load_dataset(FILENAME) 
 #dataset =load_dataset_ionosphere(FILENAME)
 #dataset =load_dataset_musk(FILENAME)
 #dataset =load_dataset_heart(FILENAME)
-dataset =load_dataset_ecoli(FILENAME)
+#dataset =load_dataset_ecoli(FILENAME)
 #dataset = load_dataset_magic(FILENAME)
 
-(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
+# (training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
-if IS_VERBOSE:
-	print("training set size: %s testing set size: %s num instances: %s" % 
-		(len(training_set), len(testing_set), len(dataset)))
+# if IS_VERBOSE:
+# 	print("training set size: %s testing set size: %s num instances: %s" % 
+# 		(len(training_set), len(testing_set), len(dataset)))
 
 # because datasets sometimes place the class attribute at the end or even 
 # at the beginning or the middle, we'll separate the attribute vector from
 # the class-label. also note that this is the way scikit-learn does it. 
 # train_x: the attribute vector; train_y: the class_label  
-(train_x, train_y) = split_attribute_and_label(training_set)
-(test_x, test_y) = split_attribute_and_label(testing_set)
+# (train_x, train_y) = split_attribute_and_label(training_set)
+# (test_x, test_y) = split_attribute_and_label(testing_set)
 
 
 # # create the perceptron classifier 
@@ -493,28 +621,28 @@ if IS_VERBOSE:
 # print("=========")
 
 # test their perceptron and adaboost for comparison 
-p = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
-							fit_intercept=True, eta0=ETA)
-p.fit(train_x, train_y)
-result_list = p.predict(test_x)
-print("their perceptron error on test: %s" % calculate_error(test_y, result_list))
+# p = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
+# 							fit_intercept=True, eta0=ETA)
+# p.fit(train_x, train_y)
+# result_list = p.predict(test_x)
+# print("their perceptron error on test: %s" % calculate_error(test_y, result_list))
 
-pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
-							fit_intercept=True, eta0=ETA)
+# pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
+# 							fit_intercept=True, eta0=ETA)
 
 
-bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=NUM_OF_CLASSIFIERS)
-bdt.fit(train_x, train_y)
-result_list = bdt.predict(test_x)
-print("their adaboost error on test: %s" % calculate_error(test_y, result_list))
+# bdt = AdaBoostClassifier(p,algorithm="SAMME",n_estimators=NUM_OF_CLASSIFIERS)
+# bdt.fit(train_x, train_y)
+# result_list = bdt.predict(test_x)
+# print("their adaboost error on test: %s" % calculate_error(test_y, result_list))
 
-# test a decision tree 
-clf = tree.DecisionTreeClassifier()
-clf = clf.fit(train_x, train_y)
-decision_tree_result_list = clf.predict(test_x)
-print("=========")
-print("single tree error rate on testing set: %s" % calculate_error(test_y, decision_tree_result_list))
-print("=========")
+# # test a decision tree 
+# clf = tree.DecisionTreeClassifier()
+# clf = clf.fit(train_x, train_y)
+# decision_tree_result_list = clf.predict(test_x)
+# print("=========")
+# print("single tree error rate on testing set: %s" % calculate_error(test_y, decision_tree_result_list))
+# print("=========")
 
 # # Create the perceptron object (net)
 # #net = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, fit_intercept=True, eta0=ETA)
