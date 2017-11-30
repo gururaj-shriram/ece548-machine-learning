@@ -1,5 +1,6 @@
 \documentclass{beamer}
 
+\graphicspath{ {../code/}}
 \mode<presentation> {
 %\usetheme{default}
 %\usetheme{AnnArbor}
@@ -89,7 +90,16 @@
 %------------------------------------------------
 \section{A bit of theory} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
 %------------------------------------------------
+\begin{frame}
+\frametitle{Why bother \textbf{boosting}?}
+\begin{itemize}
+\item Data used for induction rarely captures all aspects of the class. % Variance error 
+\item Individual classifiers suffer from \textbf{bias-related} error. % linear classifiers suffer from linearly separability 
+\item How about using \textbf{many} classifiers? ``Collective wisdom''? 
+\end{itemize}
 
+\end{frame}
+%------------------------------------------------
 \begin{frame}
 \frametitle{A bit of theory...}
 \begin{block}{Adaboost}
@@ -97,136 +107,224 @@
 - Miroslav Kubat, \textit{An Introduction to Machine Learning}
 \end{block}
 \begin{itemize}
-\item Adaboost is a \textbf{boosting algorithm}. 
-\item We expect that 
-\end{itemize}
-
-\end{frame}
-
-%------------------------------------------------
-
-\begin{frame}
-\frametitle{Bullet Points}
+\item Improvement over \textbf{bagging} and \textbf{Schapire's boosting}. 
 \begin{itemize}
-\item Lorem ipsum dolor sit amet, consectetur adipiscing elit
-\item Aliquam blandit faucibus nisi, sit amet dapibus enim tempus eu
-\item Nulla commodo, erat quis gravida posuere, elit lacus lobortis est, quis porttitor odio mauris at libero
-\item Nam cursus est eget velit posuere pellentesque
-\item Vestibulum faucibus velit a augue condimentum quis convallis nulla gravida
+\item Reduce randomness and the need for great many examples.
+\end{itemize}
+\item Classifiers should build upon the weaknesses of others. 
+\end{itemize}
+
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{A Practical Approach}
+\begin{itemize}
+\item Selecting examples for T\textsubscript{i} is done \textbf{probabilistically}. 
+\item For T\textsubscript{1}: each example has $p = 1 / m$
+\begin{itemize}
+\item "Wheel of Fortune" 
+\end{itemize}
+\item For each following \textit{T}\textsubscript{i}: 
+\begin{itemize}
+\item Calculate $\varepsilon\textsubscript{i} = \sum_{j=1}^{m} p\textsubscript{i}(\textbf{x}\textsubscript{j}) * e\textsubscript{i}(\textbf{x}\textsubscript{j})$
+\item Calculate $\beta\textsubscript{i} = \varepsilon\textsubscript{i} / (1 - \varepsilon\textsubscript{i}) $
+\end{itemize}
+\item Scale \textbf{correctly} classified examples by $p\textsubscript{i+1}(\textbf{x}\textsubscript{j}) = p\textsubscript{i}(\textbf{x}\textsubscript{j}) * \beta\textsubscript{i}$
+\begin{itemize}
+\item Less chance of being selected. 
+\end{itemize}
+\item Normalize to ensure the new distribution sums to 1.  
+\item From each ``custom'' T\textsubscript{i}, a C\textsubscript{i} is induced.
 \end{itemize}
 \end{frame}
-
 %------------------------------------------------
-
 \begin{frame}
-\frametitle{Blocks of Highlighted Text}
-\begin{block}{Block 1}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer lectus nisl, ultricies in feugiat rutrum, porttitor sit amet augue. Aliquam ut tortor mauris. Sed volutpat ante purus, quis accumsan dolor.
-\end{block}
+\frametitle{Weighted Majority Voting}
+\begin{itemize}
+\item Each classifier's vote has a weight.
+\item Higher classifier performance = votes worth more = higher weight
+\item Sum these weights for W\textsubscript{pos} and W\textsubscript{neg} to see which has higher support. 
+\item How to obtain these weights? Use \textbf{perceptron learning}. 
+\begin{itemize}
+\item Present the assembly one example at a time from the training set.
+\item Upon misclassification, use classical weight-updating formula (Chapter 4)
+\end{itemize}
+\end{itemize}
 
-\begin{block}{Block 2}
-Pellentesque sed tellus purus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Vestibulum quis magna at risus dictum tempor eu vitae velit.
-\end{block}
-
-\begin{block}{Block 3}
-Suspendisse tincidunt sagittis gravida. Curabitur condimentum, enim sed venenatis rutrum, ipsum neque consectetur orci, sed blandit justo nisi ac lacus.
-\end{block}
 \end{frame}
-
 %------------------------------------------------
-
 \begin{frame}
-\frametitle{Multiple Columns}
-\begin{columns}[c] % The "c" option specifies centered vertical alignment while the "t" option is used for top vertical alignment
-
-\column{.45\textwidth} % Left column and width
-\textbf{Heading}
+\frametitle{Hypothesis}
+\begin{itemize}
+\item Training and testing error rate should \textbf{decrease} when more classifiers added. 
+\begin{itemize}
+\item We would like to see weak learners approximate the accuracy of a strong learner.
+\end{itemize}
+\item Error rate should \textbf{converge} after some large number of classifiers.
+\item Computational costs $\rightarrow$ reap benefits of using small training subsets. 
+\end{itemize}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\Huge{\centerline{Does experience agree?}}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Implementation}
+\begin{itemize}
+\item Weak learner: \textbf{Perceptron} (ours, in Python)
+\item Strong learner: \textbf{Decision Tree} (Scikit)
+\item Learning rate $\eta = 0.05$ and $\eta\textsubscript{weights} = 0.0001$ 
+\item Threshold $\theta = 0.05$ and $\theta\textsubscript{weights} = 0.10$
+\item Each training subset T\textsubscript{i} will hold 20\% of the training set.
+\item Training set 65\% / Testing set 35\%
+\end{itemize}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Experiment}
+\begin{itemize}
+\item Begin with one learner. Add groups of two till 50 reached. 
+\item Average this process for 5 times.  
+\item Measure \textbf{\# classifiers} vs. \textbf{error rate} 
+\end{itemize}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Domains}
+\begin{block}{UCI Repository}
 \begin{enumerate}
-\item Statement
-\item Explanation
-\item Example
+\item \textbf{Musk} {\footnotesize{(168 attributes, 476 instances, 47 pos / 45 neg)}}
+\item \textbf{Ionosphere} {\footnotesize{(34 attributes, 351 instances, 225 pos / 126 neg)}}
+\item \textbf{insert} {\footnotesize{(xx attributes, xx instances, xx pos / xx neg)}}
 \end{enumerate}
-
-\column{.5\textwidth} % Right column and width
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer lectus nisl, ultricies in feugiat rutrum, porttitor sit amet augue. Aliquam ut tortor mauris. Sed volutpat ante purus, quis accumsan dolor.
-
-\end{columns}
+\end{block}
+\begin{itemize}
+\item Exclusively \textbf{binary} classification tasks. 
+\end{itemize}
 \end{frame}
-
 %------------------------------------------------
-\section{Implementation}
-%------------------------------------------------
-
 \begin{frame}
-\frametitle{Table}
-\begin{table}
-\begin{tabular}{l l l}
-\toprule
-\textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
-\midrule
-Treatment 1 & 0.0003262 & 0.562 \\
-Treatment 2 & 0.0015681 & 0.910 \\
-Treatment 3 & 0.0009271 & 0.296 \\
-\bottomrule
-\end{tabular}
-\caption{Table caption}
-\end{table}
+\frametitle{Musk}
+Insert graph here 
 \end{frame}
-
 %------------------------------------------------
-
 \begin{frame}
-\frametitle{Theorem}
-\begin{theorem}[Mass--energy equivalence]
-$E = mc^2$
-\end{theorem}
+\frametitle{Musk}
+Insert another graph here 
 \end{frame}
-
 %------------------------------------------------
-
-\begin{frame}[fragile] % Need to use the fragile option when verbatim is used in the slide
-\frametitle{Verbatim}
-\begin{example}[Theorem Slide Code]
-\begin{verbatim}
 \begin{frame}
-\frametitle{Theorem}
-\begin{theorem}[Mass--energy equivalence]
-$E = mc^2$
-\end{theorem}
-\end{frame}\end{verbatim}
-\end{example}
+\frametitle{Musk Observations}
+Insert another graph here 
 \end{frame}
-
-%------------------------------------------------
-
+%-------------------------------------------------
 \begin{frame}
-\frametitle{Figure}
-Uncomment the code on this slide to include your own image from the same directory as the template .TeX file.
-%\begin{figure}
-%\includegraphics[width=0.8\linewidth]{test}
-%\end{figure}
+\frametitle{Ionosphere}
+\begin{center}
+\includegraphics[width=0.8\linewidth]{Ionosphere.png}
+\end{center}
 \end{frame}
-
 %------------------------------------------------
-
-\begin{frame}[fragile] % Need to use the fragile option when verbatim is used in the slide
-\frametitle{Citation}
-An example of the \verb|\cite| command to cite within the presentation:\\~
-
-This statement requires citation \cite{p1}.
-\end{frame}
-
-%------------------------------------------------
-\section{Domains}
 \begin{frame}
-\frametitle{Credit cards}
+\frametitle{Ionosphere}
+\begin{center}
+\includegraphics[width=0.8\linewidth]{Ionosphere_different_classifiers.png}
+\end{center}
 \end{frame}
-
+%------------------------------------------------
+\begin{frame}
+\frametitle{Ionosphere Observations}
+\begin{itemize}
+\item observation 
+\end{itemize}
+\end{frame}
+%-------------------------------------------------
+\begin{frame}
+\frametitle{Insert}
+\begin{center}
+%\includegraphics[width=0.8\linewidth]{Ionosphere.png}
+graph here
+\end{center}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Insert}
+\begin{center}
+%\includegraphics[width=0.8\linewidth]{Ionosphere_different_classifiers.png}
+graph here 
+\end{center}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Insert Observations}
+\begin{itemize}
+\item observation 
+\end{itemize}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Conclusions}
+\begin{itemize}
+\item concluding remarks 
+\end{itemize}
+\end{frame}
+%------------------------------------------------
 \begin{frame}
 \Huge{\centerline{Questions?}}
 \end{frame}
+%-----------------------------------------------
 
-%----------------------------------------------------------------------------------------
+% \begin{frame}
+% \frametitle{Multiple Columns}
+% \begin{columns}[c] % The "c" option specifies centered vertical alignment while the "t" option is used for top vertical alignment
+
+% \column{.45\textwidth} % Left column and width
+% \textbf{Heading}
+% \begin{enumerate}
+% \item Statement
+% \item Explanation
+% \item Example
+% \end{enumerate}
+
+% \column{.5\textwidth} % Right column and width
+% Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer lectus nisl, ultricies in feugiat rutrum, porttitor sit amet augue. Aliquam ut tortor mauris. Sed volutpat ante purus, quis accumsan dolor.
+
+% \end{columns}
+% \end{frame}
+
+% %------------------------------------------------
+% \section{Implementation}
+% %------------------------------------------------
+
+% \begin{frame}
+% \frametitle{Table}
+% \begin{table}
+% \begin{tabular}{l l l}
+% \toprule
+% \textbf{Treatments} & \textbf{Response 1} & \textbf{Response 2}\\
+% \midrule
+% Treatment 1 & 0.0003262 & 0.562 \\
+% Treatment 2 & 0.0015681 & 0.910 \\
+% Treatment 3 & 0.0009271 & 0.296 \\
+% \bottomrule
+% \end{tabular}
+% \caption{Table caption}
+% \end{table}
+% \end{frame}
+
+% %------------------------------------------------
+
+% \begin{frame}
+% \frametitle{Figure}
+% Uncomment the code on this slide to include your own image from the same directory as the template .TeX file.
+% %\begin{figure}
+% %\includegraphics[width=0.8\linewidth]{test}
+% %\end{figure}
+% \end{frame}
+
+%------------------------------------------------
+
 
 \end{document}
               
