@@ -36,15 +36,15 @@ from adaboost import classifier_error_rate
 FILENAME = "dataset/occupancy.dat"
 
 FILENAME_LIST = [
-	#"dataset/kidney.dat"]
+	#"dataset/kidney.dat",
 	# "dataset/cancer.dat"]
 	#"dataset/occupancy.dat"]	
-	#"dataset/ionosphere.dat", 
-	#"dataset/musk.dat", 
+	"dataset/ionosphere.dat"]
+	#"dataset/musk.dat"]
 	#"dataset/heart.dat", 
 	#"dataset/spambase.dat", 
 	#"dataset/animals.dat", 
-	"dataset/ecoli.dat"]
+	#"dataset/ecoli.dat"]
 	#"dataset/fertility.dat",
 	#"dataset/magic04.dat"]
 
@@ -519,11 +519,15 @@ def plot_color_map(filename, training_set):
 	temp_X = np.array(train_X).astype(np.float)
 	temp_y = []
 
-	# Convert string class labels into a number to be used by SciKit's K-NN
 	for data in train_y:
 		temp_y.append(int(data))
 
-	X = np.array(temp_X[:,:2])
+	# change this for interesting attributes
+	attribute_1_index = 0
+	attribute_2_index = 1
+
+	# get subset of training set with the attributes at the calculated indexes
+	X = np.array(temp_X[:,attribute_1_index:attribute_2_index+1])
 	y = np.array(temp_y)
 
 	pada = perceptron.Perceptron(max_iter=UPPER_BOUND, verbose=0, random_state=None, 
@@ -568,6 +572,7 @@ def run_all(num_times = 1):
 		while j < len(FILENAME_LIST):
 			filename = FILENAME_LIST[j]
 			j += 1
+
 			dataset = load_any_dataset(filename)
 			(training_set,testing_set) = split_dataset(dataset, PROBABILITY_TRAINING_SET)
 
@@ -576,13 +581,15 @@ def run_all(num_times = 1):
 				decision_tree_avg_error = decision_tree_avg_run(5, training_set, testing_set)
 				perceptron_avg_error = perceptron_avg_run(5, training_set, testing_set)
 			except Exception as e:
-				print(str(e))
+				#print(str(e))
 				j = 0
 				continue
 			
 			plot_errors(filename, i+1, error_list)
 			plot_testing_set_errors(filename, i+1, error_list, decision_tree_avg_error, perceptron_avg_error)
-			plot_color_map(filename, training_set)
+
+			# Change attribute parameters in plot_color_map for good results
+			#plot_color_map(filename, training_set)
 
 
 # preprocessing: load in the dataset and split into a training and testing set 
@@ -694,4 +701,3 @@ def run_all(num_times = 1):
 # plot_testing_set_errors(FILENAME, error_list, decision_tree_avg_error, perceptron_avg_error)
 
 run_all()
-#run_all(2)
