@@ -1,0 +1,15 @@
+\begin{thebibliography}{1}
+
+\bibitem{kubat}
+Miroslav Kubat.
+\newblock {\em An Introduction to Machine Learning}, chapter Nearest Neighbor
+  Classifiers.
+\newblock Springer International, second edition, 2017.
+
+\bibitem{scikit}
+Scikit-learn.
+\newblock Nearest neighbors classification.
+\newblock URL:
+  \url{http://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html}.
+
+\end{thebibliography}

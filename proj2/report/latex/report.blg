@@ -1,0 +1,55 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: report.aux
+The style file: plainurl.bst
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=20001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: bibi.bib
+Warning--entry type for "scikit" isn't style-file defined
+--line 15 of file bibi.bib
+Warning--I didn't find a database entry for "numpy"
+Warning--I didn't find a database entry for "ionosphere"
+You've used 2 entries,
+            2849 wiz_defined-function locations,
+            628 strings with 5274 characters,
+and the built_in function-call counts, 707 in all, are:
+= -- 65
+> -- 16
+< -- 1
++ -- 7
+- -- 4
+* -- 23
+:= -- 121
+add.period$ -- 6
+call.type$ -- 2
+change.case$ -- 8
+chr.to.int$ -- 0
+cite$ -- 2
+duplicate$ -- 23
+empty$ -- 80
+format.name$ -- 4
+if$ -- 185
+int.to.chr$ -- 0
+int.to.str$ -- 2
+missing$ -- 2
+newline$ -- 13
+num.names$ -- 4
+pop$ -- 24
+preamble$ -- 1
+purify$ -- 6
+quote$ -- 0
+skip$ -- 57
+stack$ -- 0
+substring$ -- 11
+swap$ -- 3
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 6
+warning$ -- 0
+while$ -- 4
+width$ -- 3
+write$ -- 23
+(There were 3 warnings)
