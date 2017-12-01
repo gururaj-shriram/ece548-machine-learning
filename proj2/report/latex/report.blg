@@ -9,51 +9,47 @@ Reallocated singl_function (elt_size=4) to 100 items from 50.
 Database file #1: bibi.bib
 Warning--entry type for "scikit" isn't style-file defined
 --line 15 of file bibi.bib
-Warning--entry type for "iris" isn't style-file defined
---line 20 of file bibi.bib
-Warning--entry type for "wine" isn't style-file defined
---line 24 of file bibi.bib
-Warning--to sort, need author or key in iris
-Warning--to sort, need author or key in wine
-You've used 4 entries,
+Warning--I didn't find a database entry for "numpy"
+Warning--I didn't find a database entry for "ionosphere"
+You've used 2 entries,
             2849 wiz_defined-function locations,
-            632 strings with 5379 characters,
-and the built_in function-call counts, 1213 in all, are:
-= -- 111
-> -- 20
+            628 strings with 5274 characters,
+and the built_in function-call counts, 707 in all, are:
+= -- 65
+> -- 16
 < -- 1
-+ -- 9
++ -- 7
 - -- 4
-* -- 39
-:= -- 165
-add.period$ -- 10
-call.type$ -- 4
-change.case$ -- 14
+* -- 23
+:= -- 121
+add.period$ -- 6
+call.type$ -- 2
+change.case$ -- 8
 chr.to.int$ -- 0
-cite$ -- 6
-duplicate$ -- 41
-empty$ -- 156
+cite$ -- 2
+duplicate$ -- 23
+empty$ -- 80
 format.name$ -- 4
-if$ -- 341
+if$ -- 185
 int.to.chr$ -- 0
-int.to.str$ -- 4
+int.to.str$ -- 2
 missing$ -- 2
-newline$ -- 21
+newline$ -- 13
 num.names$ -- 4
-pop$ -- 48
+pop$ -- 24
 preamble$ -- 1
-purify$ -- 10
+purify$ -- 6
 quote$ -- 0
-skip$ -- 109
+skip$ -- 57
 stack$ -- 0
-substring$ -- 21
-swap$ -- 5
+substring$ -- 11
+swap$ -- 3
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 14
-warning$ -- 2
+type$ -- 6
+warning$ -- 0
 while$ -- 4
-width$ -- 5
-write$ -- 37
-(There were 5 warnings)
+width$ -- 3
+write$ -- 23
+(There were 3 warnings)
