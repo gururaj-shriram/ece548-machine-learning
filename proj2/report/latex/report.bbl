@@ -1,15 +1,34 @@
 \begin{thebibliography}{1}
 
+\bibitem{cancer}
+Cancer dataset.
+\newblock URL:
+  \url{https://archive.ics.uci.edu/ml/datasets/breast+cancer+wisconsin+%28original%29}.
+
+\bibitem{ionosphere}
+Ionosphere dataset.
+\newblock URL: \url{https://archive.ics.uci.edu/ml/datasets/ionosphere}.
+
+\bibitem{musk}
+Musk dataset.
+\newblock URL: \url{https://archive.ics.uci.edu/ml/datasets/Musk+(Version+1)}.
+
 \bibitem{kubat}
 Miroslav Kubat.
 \newblock {\em An Introduction to Machine Learning}, chapter Nearest Neighbor
   Classifiers.
 \newblock Springer International, second edition, 2017.
 
+\bibitem{numpy}
+NumPy.
+\newblock Numpy random choice.
+\newblock URL:
+  \url{https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.random.choice.html}.
+
 \bibitem{scikit}
 Scikit-learn.
-\newblock Nearest neighbors classification.
+\newblock Adaboost classifier.
 \newblock URL:
-  \url{http://scikit-learn.org/stable/auto_examples/neighbors/plot_classification.html}.
+  \url{http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html}.
 
 \end{thebibliography}

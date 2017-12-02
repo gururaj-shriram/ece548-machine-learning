@@ -8,48 +8,57 @@ Reallocated glb_str_end (elt_size=4) to 20 items from 10.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Database file #1: bibi.bib
 Warning--entry type for "scikit" isn't style-file defined
---line 15 of file bibi.bib
-Warning--I didn't find a database entry for "numpy"
-Warning--I didn't find a database entry for "ionosphere"
-You've used 2 entries,
+--line 9 of file bibi.bib
+Warning--entry type for "numpy" isn't style-file defined
+--line 14 of file bibi.bib
+Warning--entry type for "ionosphere" isn't style-file defined
+--line 19 of file bibi.bib
+Warning--entry type for "cancer" isn't style-file defined
+--line 23 of file bibi.bib
+Warning--entry type for "musk" isn't style-file defined
+--line 27 of file bibi.bib
+Warning--to sort, need author or key in ionosphere
+Warning--to sort, need author or key in cancer
+Warning--to sort, need author or key in musk
+You've used 6 entries,
             2849 wiz_defined-function locations,
-            628 strings with 5274 characters,
-and the built_in function-call counts, 707 in all, are:
-= -- 65
-> -- 16
+            639 strings with 5617 characters,
+and the built_in function-call counts, 1773 in all, are:
+= -- 163
+> -- 30
 < -- 1
-+ -- 7
-- -- 4
-* -- 23
-:= -- 121
-add.period$ -- 6
-call.type$ -- 2
-change.case$ -- 8
++ -- 13
+- -- 6
+* -- 55
+:= -- 227
+add.period$ -- 15
+call.type$ -- 6
+change.case$ -- 21
 chr.to.int$ -- 0
-cite$ -- 2
-duplicate$ -- 23
-empty$ -- 80
-format.name$ -- 4
-if$ -- 185
+cite$ -- 9
+duplicate$ -- 59
+empty$ -- 232
+format.name$ -- 6
+if$ -- 505
 int.to.chr$ -- 0
-int.to.str$ -- 2
+int.to.str$ -- 6
 missing$ -- 2
-newline$ -- 13
-num.names$ -- 4
-pop$ -- 24
+newline$ -- 30
+num.names$ -- 6
+pop$ -- 72
 preamble$ -- 1
-purify$ -- 6
+purify$ -- 15
 quote$ -- 0
-skip$ -- 57
+skip$ -- 163
 stack$ -- 0
-substring$ -- 11
-swap$ -- 3
+substring$ -- 31
+swap$ -- 7
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 6
-warning$ -- 0
-while$ -- 4
-width$ -- 3
-write$ -- 23
-(There were 3 warnings)
+type$ -- 22
+warning$ -- 3
+while$ -- 6
+width$ -- 7
+write$ -- 53
+(There were 8 warnings)
