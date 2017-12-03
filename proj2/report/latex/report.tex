@@ -49,6 +49,11 @@
     title  = "Musk Dataset",
     url    = "https://archive.ics.uci.edu/ml/datasets/Musk+(Version+1)"
 }
+@CONFERENCE {sun-kamel-wang,
+    author = "Yanmin Sun, Mohamed S. Kamel and Yang Wang",
+    title = "Boosting for Learning Multiple Classes with Imbalanced Class Distribution",
+    booktitle = "Data Mining, 2006. ICDM '06. Sixth International Conference on"
+}
 \end{filecontents*}   
 
 \title{Adaboost}
@@ -83,19 +88,25 @@ In our experiments, we varied the number of subclassifiers used in our final gro
 
 \section{Ionosphere Dataset}
 
-The Ionosphere dataset was one obtained from the UCI machine learning repository \cite{ionosphere}. There are 34 continuous attributes and two class labels in this dataset. Adaboost performed remarkably well on the training set once it had at least 10 subclassifiers. The error rate dropped dramatically (from over 15\% to below 2.5\%) with the addition of the first ten classifiers, but then it reached a plateau of sorts. However, the error rate on the testing set did not change so dramatically with the variation of classifier numbers. After an initial spike above 17.5\%, the testing set error decreases and ends up dropping below 13\%. This shows the power of Adaboost- the assembly classifier ends up slightly outperforming a single perceptron classifier trained on the entire training set. The decision tree performed the best with an error rate of around 11\%. Adaboost never outperformed it time. This is because decision trees simply do a better job of classifying this dataset. This is good, because it shows how, even though perceptron is a weaker classifier, its performance can definitely be improved with Adaboost.
+The Ionosphere dataset was one obtained from the UCI machine learning repository \cite{ionosphere}. There are 34 continuous attributes and two class labels in this dataset. There are 351 examples and no missing values. The class distribution is 64.1\% positive / 35.9\% negative. \\
+
+Adaboost performed remarkably well on the training set once it had at least 10 subclassifiers. The error rate dropped dramatically (from over 15\% to below 2.5\%) with the addition of the first ten classifiers, but then it reached a plateau of sorts. However, the error rate on the testing set did not change so dramatically with the variation of classifier numbers. After an initial spike above 17.5\%, the testing set error decreases and ends up dropping below 13\%. This shows the power of Adaboost- the assembly classifier ends up outperforming a single perceptron classifier trained on the entire training set. Also, it can handle the imbalanced classes present in this dataset as well, as noted in \cite{sun-kamel-wang}. The decision tree performed the best with an error rate of around 11\%. Adaboost never outperformed it time. This is because decision trees simply do a better job of classifying this dataset. This is good, because it shows how, even though perceptron is a weaker classifier, its performance can definitely be improved with Adaboost.
 
 \section{Cancer Dataset}
 
-The Breast Cancer dataset was also obtained from the UCI repository \cite{cancer}. Like before, the error rate on the testing and training sets are observed to have a relatively sharp decrease with the addition of the first ten classifiers, which makes sense. Something to note is that the scale for the error rate is pretty small, so these changes are not as dramatic as they may seem. Adaboost performed better than a single perceptron classifier did when between around 20 and 30 subclassifiers, but then the error rate begins to rise again after that. This can be attributed to poor subclassifers being induced from outliers or other such noisy examples. The decision tree actually performed worse than a single perceptron or Adaboost did on this dataset, and that again points to noisy data, since decision trees are more succeptible to noise than Adaboost is.
+The Breast Cancer dataset was also obtained from the UCI repository \cite{cancer}. There are 10 discrete attributes and two class labels in this dataset. There are 683 examples and no missing attribute values. The class distribution is 34.9\% positive / 65.1\% negative. \\
+
+Like before, the error rate on the testing and training sets are observed to have a relatively sharp decrease with the addition of the first ten classifiers, which makes sense. Something to note is that the scale for the error rate is pretty small, so these changes are not as dramatic as they may seem. Adaboost performed better than a single perceptron classifier did when between around 20 and 30 subclassifiers, but then the error rate begins to rise again after that. This can be attributed to poor subclassifers being induced from outliers or other such noisy examples. The decision tree actually performed worse than a single perceptron or Adaboost did on this dataset, and that again points to noisy data, since decision trees are more succeptible to noise than Adaboost is. Another thing to note is that the classes in this dataset are imbalanced. As Adaboost is good at handling imbalanced classes \cite{sun-kamel-wang}, it performed well overall in bringing down the error rate, especially when the noise is taken into account.
 
 \section{Musk Dataset}
 
-Finally, the Musk data was also obtained from the UCI repository \cite{musk}. Our Adaboost's performance on this dataset was a bit worse than its performance on the others, so we wanted to include this for completness' sake. As the graphs show, the error rate jumps up and down sharply with each new classifier. This is highly emblematic of noisy data and explains why our algorithm struggled with this dataset. The training set error slowly  decreases with the addition of the first twenty algorithms, as does the testing set error. However, the testing set error rises after reaching a minimum at around 23 examples. The decision tree struggled again, doing worse than Adaboost and showing that the data was noisy.
+Finally, the Musk data was also obtained from the UCI repository \cite{musk}. There are 168 discrete attributes and two class labels in this dataset. There are 476 examples and no missing attribute values. The class distribution is 43.4\% positive / 56.6\% negative. \\
+
+Our Adaboost's performance on this dataset was a bit worse than its performance on the others, so we wanted to include this for completness' sake. As the graphs show, the error rate jumps up and down sharply with each new classifier. This is highly emblematic of noisy data and explains why our algorithm struggled with this dataset. The training set error slowly  decreases with the addition of the first twenty algorithms, as does the testing set error. However, the testing set error rises after reaching a minimum at around 23 examples. The decision tree struggled again, doing worse than Adaboost and showing that the data was noisy.
 
 \section{Conclusion}
 
-Our experiments show that Adaboost is successful at improving upon a base classifier's performance. With every test we made, Adaboost outperformed a single perceptron classifier with at least one specific number of classifiers. In noisy datasets, Adaboost struggles a bit more than a single perceptron, but it did still outperform it at least once in all of our experiments. When a dataset is not noisy, as with Ionosphere, Adaboost's error rate generally drops with the addition of more classifiers. \\
+Our experiments show that Adaboost is successful at improving upon a base classifier's performance. With every test we made, Adaboost outperformed a single perceptron classifier with at least one specific number of classifiers. In noisy datasets, Adaboost struggles a bit more than a single perceptron, but it did still outperform it at least once in all of our experiments. When a dataset is not noisy, as with Ionosphere, Adaboost's error rate generally drops with the addition of more classifiers. We also find that our Adaboost performed well in datasets with imbalanced classes, a finding that is reinforced by \cite{sun-kamel-wang}. In our experiments, we did not observe the error rate on the training and testing sets converge; the training set error was always lower than the testing set's error. \\
 
 THINGS TO CHANGE IN REPORT:
 -Scikit used only for Adaboost comparison?
@@ -108,21 +119,21 @@ THINGS TO CHANGE IN REPORT:
 \centering
 \includegraphics[scale=0.7]{Ionosphere_1}
 \includegraphics[scale=0.7]{Ionosphere_different_classifiers_1} 
-\caption{The error rate on the testing and training sets drop dramatically with the first 10 classifiers. Adaboost does slightly better than a single perceptron classifier and consistently worse than a decision tree.}
+\caption{The error rate on the testing and training sets drop dramatically with the first 10 classifiers. Adaboost does slightly better than a single perceptron classifier and consistently worse than a decision tree. The testing set error generally decreases with more subclassifiers.}
 \end{figure}
 
 \begin{figure}[hbt]
 \centering
 \includegraphics[scale=0.7]{Cancer_1}
 \includegraphics[scale=0.7]{Cancer_different_classifiers_1} 
-\caption{}
+\caption{The testing and training set errors here experience an even sharper relative decline. The dataset is noisy, leading the decision tree to do worse than Adaboost and the single perceptron. After hitting a minimum between 20 and 30 examples, the testing set error rate begins to climb back up again due to the noise in the data and bad examples being chosen to induce subclassifiers.}
 \end{figure}
 
 \begin{figure}[hbt]
 \centering
 \includegraphics[scale=0.7]{Musk_1}
 \includegraphics[scale=0.7]{Musk_different_classifiers_1} 
-\caption{}
+\caption{The data here is especially noisy, causing the training set error rate to jump up and down erratically. The testing set error does not fare much better, reaching a minimum around 23 and climbing back up past the error rate of a single perceptron classifier. The decision tree also suffers due to the noise in the data.}
 \end{figure}
 
 
