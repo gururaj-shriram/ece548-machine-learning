@@ -1,6 +1,6 @@
 \documentclass{beamer}
 
-\graphicspath{ {../code/}}
+\graphicspath{ {../code/graphs/good_graphs_newer/}}
 \mode<presentation> {
 %\usetheme{default}
 %\usetheme{AnnArbor}
@@ -68,7 +68,7 @@
 
 \author{Jerry Bonnell, Gururaj Shriram, and Lloyd Beaufils} % Your name
 \institute[ML] {ECE548 Group 7}
-\date{\today} % Date, can be changed to a custom date
+\date{December 4, 2017} % Date, can be changed to a custom date
 
 \begin{document}
 {
@@ -131,7 +131,7 @@
 \end{itemize}
 \item Scale \textbf{correctly} classified examples by $p\textsubscript{i+1}(\textbf{x}\textsubscript{j}) = p\textsubscript{i}(\textbf{x}\textsubscript{j}) * \beta\textsubscript{i}$
 \begin{itemize}
-\item Less chance of being selected. 
+\item $\varepsilon\textsubscript{i}$ small $\rightarrow$ reduce chance of selection. 
 \end{itemize}
 \item Normalize to ensure the new distribution sums to 1.  
 \item From each ``custom'' T\textsubscript{i}, a C\textsubscript{i} is induced.
@@ -158,10 +158,10 @@
 \begin{itemize}
 \item Training and testing error rate should \textbf{decrease} when more classifiers added. 
 \begin{itemize}
-\item We would like to see weak learners approximate the accuracy of a strong learner.
+\item Minimize \textbf{variance-based} error. 
 \end{itemize}
-\item Error rate should \textbf{converge} after some large number of classifiers.
-\item Computational costs $\rightarrow$ reap benefits of using small training subsets. 
+\item We would like to see weak learners approximate the accuracy of a strong learner.
+\item Error rates should \textbf{plateau} after some large number of classifiers.
 \end{itemize}
 \end{frame}
 %------------------------------------------------
@@ -172,10 +172,11 @@
 \begin{frame}
 \frametitle{Implementation}
 \begin{itemize}
+\item Adaboost in Python
 \item Weak learner: \textbf{Perceptron} (ours, in Python)
 \item Strong learner: \textbf{Decision Tree} (Scikit)
 \item Learning rate $\eta = 0.05$ and $\eta\textsubscript{weights} = 0.0001$ 
-\item Threshold $\theta = 0.05$ and $\theta\textsubscript{weights} = 0.10$
+\item Threshold $\theta = 0.05$ and $\theta\textsubscript{weights} = 0.05$
 \item Each training subset T\textsubscript{i} will hold 20\% of the training set.
 \item Training set 65\% / Testing set 35\%
 \end{itemize}
@@ -184,7 +185,7 @@
 \begin{frame}
 \frametitle{Experiment}
 \begin{itemize}
-\item Begin with one learner. Add groups of two till 50 reached. 
+\item Begin with one learner. Add learners till 50 reached. 
 \item Average this process for 5 times.  
 \item Measure \textbf{\# classifiers} vs. \textbf{error rate} 
 \end{itemize}
@@ -194,9 +195,11 @@
 \frametitle{Domains}
 \begin{block}{UCI Repository}
 \begin{enumerate}
-\item \textbf{Musk} {\footnotesize{(168 attributes, 476 instances, 47 pos / 45 neg)}}
-\item \textbf{Ionosphere} {\footnotesize{(34 attributes, 351 instances, 225 pos / 126 neg)}}
-\item \textbf{insert} {\footnotesize{(xx attributes, xx instances, xx pos / xx neg)}}
+\item \textbf{Ionosphere} {\footnotesize{(34 attributes, 351 instances, 64.1\% pos / 35.9\% neg)}}
+% breast cancer wisconsin dataset (~15 instances with missing attr's were deleted)
+% actually 699 instances, but 16 removed b/c of missing attr's 
+\item \textbf{Breast Cancer} {\footnotesize{(10 attributes, 683 instances, 34.9\% pos / 65.1\% neg)}}
+\item \textbf{Musk} {\footnotesize{(168 attributes, 476 instances, 43.4\% pos / 56.6\% neg)}}
 \end{enumerate}
 \end{block}
 \begin{itemize}
@@ -205,68 +208,54 @@
 \end{frame}
 %------------------------------------------------
 \begin{frame}
-\frametitle{Musk}
-Insert graph here 
-\end{frame}
-%------------------------------------------------
-\begin{frame}
-\frametitle{Musk}
-Insert another graph here 
-\end{frame}
-%------------------------------------------------
-\begin{frame}
-\frametitle{Musk Observations}
-Insert another graph here 
-\end{frame}
-%-------------------------------------------------
-\begin{frame}
 \frametitle{Ionosphere}
 \begin{center}
-\includegraphics[width=0.8\linewidth]{Ionosphere.png}
+\includegraphics[width=0.8\linewidth]{Ionosphere_1.png}
 \end{center}
 \end{frame}
 %------------------------------------------------
 \begin{frame}
 \frametitle{Ionosphere}
 \begin{center}
-\includegraphics[width=0.8\linewidth]{Ionosphere_different_classifiers.png}
+\includegraphics[width=0.8\linewidth]{Ionosphere_different_classifiers_1.png}
 \end{center}
 \end{frame}
 %------------------------------------------------
 \begin{frame}
-\frametitle{Ionosphere Observations}
-\begin{itemize}
-\item observation 
-\end{itemize}
+\frametitle{Breast Cancer}
+\begin{center}
+\includegraphics[width=0.8\linewidth]{Cancer_1.png}
+\end{center}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Breast Cancer}
+\begin{center}
+\includegraphics[width=0.8\linewidth]{Cancer_different_classifiers_1.png}
+\end{center}
+\end{frame}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Musk}
+\begin{center}
+\includegraphics[width=0.8\linewidth]{Musk_1.png}
+\end{center}
 \end{frame}
 %-------------------------------------------------
 \begin{frame}
-\frametitle{Insert}
+\frametitle{Musk}
 \begin{center}
-%\includegraphics[width=0.8\linewidth]{Ionosphere.png}
-graph here
+\includegraphics[width=0.8\linewidth]{Musk_different_classifiers_1.png}
 \end{center}
-\end{frame}
-%------------------------------------------------
-\begin{frame}
-\frametitle{Insert}
-\begin{center}
-%\includegraphics[width=0.8\linewidth]{Ionosphere_different_classifiers.png}
-graph here 
-\end{center}
-\end{frame}
-%------------------------------------------------
-\begin{frame}
-\frametitle{Insert Observations}
-\begin{itemize}
-\item observation 
-\end{itemize}
 \end{frame}
 %------------------------------------------------
 \begin{frame}
 \frametitle{Conclusions}
 \begin{itemize}
-\item concluding remarks 
+\item Adaboost drives the error rate down on testing set with increasing number of classifiers.
+\item Shows promise in situations with \textbf{imbalanced} training sets. 
+\item However, little ``boosting'' observed in more equally represented datasets (Musk) 
+\item Would have liked to test with 100+ classifiers to observe greater convergence in error.  
 \end{itemize}
 \end{frame}
 %------------------------------------------------
