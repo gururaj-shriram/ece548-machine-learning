@@ -31,4 +31,11 @@ Scikit-learn.
 \newblock URL:
   \url{http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.AdaBoostClassifier.html}.
 
+\bibitem{sun-kamel-wang}
+Mohamed S.~Kamel Yanmin~Sun and Yang Wang.
+\newblock Boosting for learning multiple classes with imbalanced class
+  distribution.
+\newblock In {\em Data Mining, 2006. ICDM '06. Sixth International Conference
+  on}.
+
 \end{thebibliography}
